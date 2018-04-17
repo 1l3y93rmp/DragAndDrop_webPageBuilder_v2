@@ -1,0 +1,22 @@
+{
+  "name": "d_and_d",
+  "version": "1.0.0",
+  "description": "DragAndDrop webPageBuilder 拖拉式線上網頁編輯器",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1l3y93rmp/DragAndDrop_webPageBuilder_v2.git"
+  },
+  "keywords": [
+    "DragAndDrop"
+  ],
+  "author": "1l3y93rmp",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/1l3y93rmp/DragAndDrop_webPageBuilder_v2/issues"
+  },
+  "homepage": "https://github.com/1l3y93rmp/DragAndDrop_webPageBuilder_v2#readme"
+}
