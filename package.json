@@ -20,7 +20,8 @@
   },
   "homepage": "https://github.com/1l3y93rmp/DragAndDrop_webPageBuilder_v2#readme",
   "devDependencies": {
-    "gulp": "^3.9.1"
+    "gulp": "^3.9.1",
+    "gulp-uglify": "^3.0.0"
   },
   "dependencies": {
     "del": "^3.0.0"

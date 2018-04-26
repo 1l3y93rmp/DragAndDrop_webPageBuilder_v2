@@ -1,7 +1,12 @@
 var gulp = require('gulp');
 
-// 输出
-// gulp.src('**/**.**') // 這樣就可以把各式檔案輸出
+var del = require('del');
+var uglify = require('gulp-uglify');
+
+// 输出&輸出
+// gulp.src('**/**.**') // 這樣就可以把各式檔案輸入進來
+// gulp.src('輸入的某些東西').pipe(對這些東西做些什麼~).pipe(gulp.dest('把東西輸出到另個地方~'))
+
 
 // 來設定流水線任務
 // gulp.task('任務名稱', Function(){...}) 
@@ -22,14 +27,16 @@ gulp.task('BB',  function () {
 })
 
 
-var del = require('del');
+
+
 
 gulp.task('clean:img', function () {
-  del([
+  /*del([
     'img/*.jpg',
-  ]);
+  ]);*/
 });
 
 gulp.task('default', ['clean:img', 'AA'], function (){
-  
+  gulp.start('BB')
+  gulp.src('./img/**.js').pipe(uglify()).pipe(gulp.dest('./pub')) // 把./img/ 內的JS通過 uglify() 的處裡 丟到./pub裡面
 });
