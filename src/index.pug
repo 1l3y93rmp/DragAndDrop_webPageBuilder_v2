@@ -1,9 +1,6 @@
-doctype transitional
-html(xmlns='http://www.w3.org/1999/xhtml')
-  head
-    meta(http-equiv='Content-Type', content='text/html; charset=utf-8')
-    title 這是首頁
-    link(rel='stylesheet', href='/css/common.css')
-    script(src='/Scripts/common.js')
-  body
-    h1 Hello Node.js & express componentGOGO
+extends ./pug/tmp_common
+
+block title
+  title 這~是首頁
+block content
+  h1 Hello Node.js & express component

@@ -75,14 +75,9 @@ gulp.task('watchToStratTask',function(){
   gulp.watch(['./src/Css/**.sass'], ['cssSass','browserReload']) // 當檔案有動靜，重跑任務
 })
 
-gulp.task('default', ['htmlPug','cssSass','browserify','browserSync'], function (){
-  gulp.start('watchToStratTask') //預設任務 打開偵聽
+gulp.task('default', ['htmlPug','cssSass','browserify'], function (){
+  gulp.start(['browserSync','watchToStratTask']) //預設任務 打開偵聽
 });
 
-
-
-gulp.task('default', ['browserSync'], function (){
-  gulp.start('watchToStratTask')
-});
 
 requireDir('./gulpTasks/', { recurse: true }); // 有了這個 Gulp 會自己到這個目錄下找任務~
