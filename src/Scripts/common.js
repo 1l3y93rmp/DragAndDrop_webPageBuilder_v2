@@ -1,3 +1,3 @@
-﻿var buffer = require('vinyl-buffer')
-console.log(buffer)
-console.log('AAeeeeeeeeeeeeeeeeeeeeeeeeee')
+﻿var $ = require('jquery')
+console.log($)
+console.log('AAAAAAAA')
