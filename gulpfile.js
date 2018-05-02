@@ -2,6 +2,12 @@ var gulp = require('gulp');
 var del = require('del');
 var uglify = require('gulp-uglify');
 var browserSync = require('browser-sync');
+var browserify = require('browserify')
+var source = require('vinyl-source-stream')
+var buffer = require('vinyl-buffer')
+var requireDir = require('require-dir'); // 此套件會協助去找任務JS
+
+
 
 // 输出&輸出
 // gulp.src('**/**.**') // 這樣就可以把各式檔案輸入進來
@@ -25,16 +31,25 @@ var browserSync = require('browser-sync');
 
 
 
-
+/*
 gulp.task('clean:img', function () {
-  /*del([
+  del([
     'img/*.jpg',
-  ]);*/
+  ]);
 });
 
 gulp.task('JSuglify', function () { // 命名一個叫做"JSuglify"的任務
   gulp.src('./src/Scripts/**.js').pipe(uglify()).pipe(gulp.dest('./webroot/Scripts')) // 把./src/ 內的JS通過 uglify() 的處裡 丟到./webroot
 })
+
+
+gulp.task('copyHtml',function(){
+  gulp.src('./src/*.html').pipe(gulp.dest('./webroot'));
+  browserSync.reload()
+})
+*/
+
+
 
 gulp.task('browserSync',function () {
   browserSync({
@@ -47,9 +62,27 @@ gulp.task('browserSync',function () {
   });
 })
 
+gulp.task('browserReload', function () {
+  browserSync.reload()
+})
+
+
+
+gulp.task('watchToStratTask',function(){
+  gulp.watch(['./src/Scripts/**.js'], ['browserify','browserReload']) // 當檔案有動靜，重跑任務+Reload
+
+  gulp.watch(['./src/**.pug'], ['htmlPug','browserReload']) // 當檔案有動靜，重跑任務
+  gulp.watch(['./src/Css/**.sass'], ['cssSass','browserReload']) // 當檔案有動靜，重跑任務
+})
+
+gulp.task('default', ['htmlPug','cssSass','browserify','browserSync'], function (){
+  gulp.start('watchToStratTask') //預設任務 打開偵聽
+});
+
 
 
 gulp.task('default', ['browserSync'], function (){
-  gulp.start('JSuglify')
-  gulp.watch(['./src/Scripts/**.js'], ['JSuglify']) // 當檔案有動靜，重跑任務
+  gulp.start('watchToStratTask')
 });
+
+requireDir('./gulpTasks/', { recurse: true }); // 有了這個 Gulp 會自己到這個目錄下找任務~
