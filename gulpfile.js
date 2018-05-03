@@ -70,7 +70,6 @@ gulp.task('browserReload', function () {
 
 gulp.task('watchToStratTask',function(){
   gulp.watch(['./src/Scripts/**.js'], ['browserify','browserReload']) // 當檔案有動靜，重跑任務+Reload
-
   gulp.watch(['./src/**.pug'], ['htmlPug','browserReload']) // 當檔案有動靜，重跑任務
   gulp.watch(['./src/Css/**.sass'], ['cssSass','browserReload']) // 當檔案有動靜，重跑任務
 })
