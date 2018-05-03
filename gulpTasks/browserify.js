@@ -25,8 +25,8 @@ gulp.task('browserify', function(){
   .bundle()
   .pipe(source('common.js')) // 要有這個 source 就可以把 Node 流 轉成 Gulp 流 這裡寫輸出檔名
   .pipe(buffer()) //要有這個buffer任務再前面才可以接其他 pipe 任務
-  .pipe(babel({presets: ['es2015', 'react']}))
   .pipe(sourcemaps.init({loadMaps: true}))
+  .pipe(babel({presets: ['es2015', 'react']}))
   .pipe(uglify())
   .pipe(sourcemaps.write('./maps'))
   .pipe(gulp.dest('./webroot/Scripts')) // 輸出位置
