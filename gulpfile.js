@@ -1,12 +1,7 @@
 var gulp = require('gulp');
 var del = require('del');
-var uglify = require('gulp-uglify');
 var browserSync = require('browser-sync');
-var browserify = require('browserify')
-var source = require('vinyl-source-stream')
-var buffer = require('vinyl-buffer')
 var requireDir = require('require-dir'); // 此套件會協助去找任務JS
-
 
 
 // 输出&輸出
@@ -30,31 +25,55 @@ var requireDir = require('require-dir'); // 此套件會協助去找任務JS
 
 
 
-
 /*
-gulp.task('clean:img', function () {
-  del([
-    'img/*.jpg',
-  ]);
-});
-
 gulp.task('JSuglify', function () { // 命名一個叫做"JSuglify"的任務
-  gulp.src('./src/Scripts/**.js').pipe(uglify()).pipe(gulp.dest('./webroot/Scripts')) // 把./src/ 內的JS通過 uglify() 的處裡 丟到./webroot
+  gulp.src(global.src'/Scripts/**.js').pipe(uglify()).pipe(gulp.dest('./webroot/Scripts')) // 把./src/ 內的JS通過 uglify() 的處裡 丟到./webroot
 })
 
 
 gulp.task('copyHtml',function(){
-  gulp.src('./src/*.html').pipe(gulp.dest('./webroot'));
+  gulp.src(global.src'/*.html').pipe(gulp.dest('./webroot'));
   browserSync.reload()
 })
 */
 
 
+var env = process.env.NODE_ENV.trim() // 這是參數 由set NODE_ENV=在CDN內設定的
+var config = require('./gulpconfig') // 這個檔案儲存了很多路徑
+
+
+// global path
+global.src = config.dir.src // 未編譯專案本身位置
+global.webroot = config.dir.webroot //專案輸出與瀏覽指定位置
+global.cssDir = config.dir.cssDir // CSS資料夾位置
+global.jsDir = config.dir.jsDir // JS資料夾位置
+
+if (env === 'dev'){ // 開發模式
+  global.uglify = false
+  global.needMap = true
+  global.isWatching = true
+} else if (env === 'publish') { // 發佈模式，有壓縮 (仍可編輯)
+  global.uglify = true
+  global.needMap = true
+  global.isWatching = true
+} else if (env === 'view') { // 預覽模式 (無 Watching 不可編輯)
+  global.uglify = true
+  global.needMap = false
+  global.isWatching = false
+}
+
+
+gulp.task('clean:webroot', function () {
+  del([
+    global.webroot,
+  ]);
+});
+
 
 gulp.task('browserSync',function () {
   browserSync({
     server: {
-      baseDir: ['./webroot']
+      baseDir: [global.webroot]
     },
     port: '1024'
   }, function(err, bs) {
@@ -69,13 +88,20 @@ gulp.task('browserReload', function () {
 
 
 gulp.task('watchToStratTask',function(){
-  gulp.watch(['./src/Scripts/**.js'], ['browserify','browserReload']) // 當檔案有動靜，重跑任務+Reload
-  gulp.watch(['./src/**.pug'], ['htmlPug','browserReload']) // 當檔案有動靜，重跑任務
-  gulp.watch(['./src/Css/**.sass'], ['cssSass','browserReload']) // 當檔案有動靜，重跑任務
+  gulp.watch([global.src + '/Scripts/**.js'], ['browserify']) // 當檔案有動靜，重跑任務+Reload
+  gulp.watch([global.src + '/**.pug'], ['htmlPug']) // 當檔案有動靜，重跑任務
+  gulp.watch([global.src + '/Css/**.sass'], ['cssSass']) // 當檔案有動靜，重跑任務
+
+  gulp.watch([global.webroot + '/**'], ['browserReload'])
 })
 
-gulp.task('default', ['htmlPug','cssSass','browserify'], function (){
-  gulp.start(['browserSync','watchToStratTask']) //預設任務 打開偵聽
+gulp.task('default', ['htmlPug', 'cssSass', 'browserify'], function (){
+  
+  if (global.isWatching) {
+    gulp.start(['browserSync','watchToStratTask']) //預設任務 打開偵聽與瀏覽器同步
+  } else {
+    gulp.start(['browserSync'])
+  }
 });
 
 

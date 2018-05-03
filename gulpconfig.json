@@ -1,0 +1,8 @@
+{
+  "dir": {
+    "src": "./src",
+    "webroot": "./webroot",
+    "jsDir": "/Scripts/",
+    "cssDir": "/Css/"
+  }
+}
