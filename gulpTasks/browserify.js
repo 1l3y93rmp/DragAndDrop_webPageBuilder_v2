@@ -12,7 +12,7 @@ var babelify = require('babelify')
 
 
 
-gulp.task('browserify', function(){
+gulp.task('browserify', ['standard'], function(){
   var customOpts = {
     entries: [src + jsDir + 'common.js'], // 之於HTML調用的JS入口
     debug: true
