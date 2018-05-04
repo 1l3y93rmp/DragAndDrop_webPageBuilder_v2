@@ -1,11 +1,14 @@
 ﻿var $ = require('jquery')
 // var bbc = require('j')
-console.log($)
-console.log('yyyy')
+// console.log($)
+$(function () {
+    console.log('yyy')
 
-class AAA {
-    GO (params) {
-        console.log(params)
+    class AAA {
+        GO (params) {
+            console.log(params)
+        }
     }
-}
-console.log(BBB)
+    console.log($('h1'))
+
+})
