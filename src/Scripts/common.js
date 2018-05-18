@@ -23,6 +23,7 @@ $(function () {
         cJ: []
       }
       this.dropped = this.dropped.bind(this)
+      this.dragoverGoYellow = this.dragoverGoYellow.bind(this)
     }
 
     mapToCreatDiv (cJdata) {
@@ -35,7 +36,8 @@ $(function () {
               style={divStyle}
               onDrop={this.dropped}
               onDragEnter={this.cancelDefault}
-              onDragOver={this.cancelDefault}
+              onDragOver={this.dragoverGoYellow}
+              onDragLeave={this.dragleaveGoBack}
             >
               {this.mapToCreatDiv(node.cJ)}
             </div>
@@ -47,7 +49,8 @@ $(function () {
               style={divStyle}
               onDrop={this.dropped}
               onDragEnter={this.cancelDefault}
-              onDragOver={this.cancelDefault}
+              onDragOver={this.dragoverGoYellow}
+              onDragLeave={this.dragleaveGoBack}
             />
           )
         }
@@ -64,10 +67,17 @@ $(function () {
       return false
     }
 
-    dropped (e) { // 被綁在要被放東西進來的框框(operatingArea) onDrop時調用這個方法
-      console.log('進來惹')
-      console.log($(e.currentTarget).parents())
+    dragoverGoYellow (e) { // 被拉到的時候變成黃色ㄅ
+      $(e.currentTarget).addClass('Yellow')
+      this.cancelDefault(e)
+    }
 
+    dragleaveGoBack (e) { // 沒有被拉到的時候 變回白色
+      $(e.currentTarget).removeClass('Yellow')
+    }
+
+    dropped (e) { // 被綁在要被放東西進來的框框(operatingArea) onDrop時調用這個方法
+      $(e.currentTarget).removeClass('Yellow')
       let divLevels = $(e.currentTarget).parents().length - 4// 得知該DIV往外有幾層
       let divIndex = $(e.currentTarget).prevAll().length // 得知該DIV再同輩順位幾
       let newCj = this.state.cJ
@@ -99,13 +109,16 @@ $(function () {
       return (
         <React.Fragment>
           <div id='menu'>
-            <div draggable='true' onDragStart={this.ondragstart}> 添加一個框框 </div>
+            <div draggable='true'
+              onDragStart={this.ondragstart}
+            > 添加一個框框 </div>
           </div>
           <div id='operatingArea'
             data-role='drag-drop-container'
             onDrop={this.dropped}
             onDragEnter={this.cancelDefault}
-            onDragOver={this.cancelDefault}
+            onDragOver={this.dragoverGoYellow}
+            onDragLeave={this.dragleaveGoBack}
           >
             {this.mapToCreatDiv(this.state.cJ)}
           </div>
