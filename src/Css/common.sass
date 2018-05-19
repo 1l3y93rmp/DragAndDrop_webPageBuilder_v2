@@ -17,13 +17,12 @@
 
 #operatingArea
   border: 1px solid #ccc
-  height: 100vh
+  min-height: 300px
   padding: 20px
   box-sizing: border-box
-  background-color: #fff
-  transition: all .3s
+  transition: background-color .3s
   div
-    min-height: 50px
+    min-height: 300px
     border: 1px solid #ccc
     box-sizing: border-box
     display: inline-block
@@ -31,8 +30,45 @@
     letter-spacing: 0
     padding: 20px
     background-color: #fff
-    transition: all .3s
-  &.Yellow, div.Yellow
-    background-color: #fffbd3
+    transition: background-color .3s
+.Slect
+  background-color: #fffbd3 !important
+  position: relative
+  &.L, &.R, &.T, &.B, &.C
+    &::after
+      content: ''
+      display: block
+      color: #fff
+      position: absolute
+      background: pink
+  &.L::after
+    left: 0
+    top: 0
+    width: 100px
+    height: 100%
+  &.T::after
+    left: 0
+    top: 0
+    width: 100%
+    height: 100px
+  &.R::after
+    right: 0
+    top: 0
+    width: 100px
+    height: 100%
+  &.B::after
+    left: 0
+    bottom: 0
+    width: 100%
+    height: 100px
+  &.C::after
+    left: 100px
+    top: 100px
+    width: calc( 100% - 200px )
+    height: calc( 100% - 200px )
+    
+  
+    
+    
 
 

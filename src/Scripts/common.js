@@ -6,14 +6,6 @@ $(function () {
   // console.log($)
   // console.log(React)
 
-  class DataInput extends React.Component {
-    // 可供應放置資料的框
-    render () {
-      return (
-        <div className={this.props.class} />
-      )
-    }
-  }
 
   class MenuAndOperatingArea extends React.Component {
     constructor () {
@@ -23,7 +15,7 @@ $(function () {
         cJ: []
       }
       this.dropped = this.dropped.bind(this)
-      this.dragoverGoYellow = this.dragoverGoYellow.bind(this)
+      this.dragoverGoSlect = this.dragoverGoSlect.bind(this)
     }
 
     mapToCreatDiv (cJdata) {
@@ -36,7 +28,7 @@ $(function () {
               style={divStyle}
               onDrop={this.dropped}
               onDragEnter={this.cancelDefault}
-              onDragOver={this.dragoverGoYellow}
+              onDragOver={this.dragoverGoSlect}
               onDragLeave={this.dragleaveGoBack}
             >
               {this.mapToCreatDiv(node.cJ)}
@@ -49,7 +41,7 @@ $(function () {
               style={divStyle}
               onDrop={this.dropped}
               onDragEnter={this.cancelDefault}
-              onDragOver={this.dragoverGoYellow}
+              onDragOver={this.dragoverGoSlect}
               onDragLeave={this.dragleaveGoBack}
             />
           )
@@ -61,34 +53,63 @@ $(function () {
       e.dataTransfer.setData('text/plain', e.target.id)
     }
 
-    cancelDefault (e) { // 在防止預設行為的方法，被 dropped dragoverGoYellow 調用
+    cancelDefault (e) { // 在防止預設行為的方法，被 dropped dragoverGoSlect 調用
       e.preventDefault()
       e.stopPropagation()
       return false
     }
 
-    dragoverGoYellow (e) { // 被拉到的時候變成黃色
-      $(e.currentTarget).addClass('Yellow')
+    mousePosition (e) {
       // 需要得知游標的位置靠近哪裡? 上/下/左/右
       var $target = $(e.currentTarget)
       let offset = $target.offset()
       let $bottom = offset.top + $target.innerHeight()
       let $right = offset.left + $target.innerWidth()
-      console.log(offset.top, $right, $bottom, offset.left)
+      let $top = offset.top
+      let $left = offset.left
+
+      let mouseLeft = e.clientX
+      let mouseTop = e.clientY
+
+      if ( $left + 100 > mouseLeft && $left < mouseLeft) { return ('L') }
+      if ( mouseLeft > $right - 100 && mouseLeft < $right) { return ('R') }
+      if ( $top + 100 > mouseTop && $top < mouseTop) { return ('T') }
+      if ( mouseTop > $bottom - 100 && mouseTop < $bottom) { return ('B') }
+      return ('C')
+    }
+
+
+    dragoverGoSlect (e) { // 被拉到的時候變成黃色
+      var $target = $(e.currentTarget)
+      var nowClass = $target.attr('class')
+      let addRule = this.mousePosition(e)
+      if ( nowClass && nowClass.indexOf(addRule) === -1 ){
+        // 表示CLASS上下左右該換了
+        var oldClass = nowClass.substring(nowClass.length-1)
+        $target.removeClass(oldClass)
+      }
+      $target.addClass('Slect ' + addRule)
       this.cancelDefault(e)
     }
 
     dragleaveGoBack (e) { // leave的時候 變回白色
-      $(e.currentTarget).removeClass('Yellow')
+      $(e.currentTarget).removeClass('Slect L R C T B')
     }
 
     dropped (e) { // 被綁在要被放東西進來的框框(#operatingArea) onDrop時調用這個方法
-      $(e.currentTarget).removeClass('Yellow')
+      $(e.currentTarget).removeClass('Slect')
       let divLevels = $(e.currentTarget).parents().length - 4// 得知該DIV往外有幾層
       // -4 是因為 Html Body #content #operatingArea 這4層不要
       let divIndex = $(e.currentTarget).prevAll().length // 得知該DIV再同輩順位幾
       let newCj = this.state.cJ
-      let divJson = {cJ: []}
+      let addRule = this.mousePosition(e)
+      let divJson
+      if (addRule === 'T' || addRule === 'B'){
+        divJson = [{cJ: []}]
+      } else {
+        divJson = {cJ: []}
+      }
+      
 
       if (divLevels < 0) {
         newCj.push(divJson)
@@ -101,8 +122,12 @@ $(function () {
           S = S + '[' + papaLength + '].cJ'
         }
 
-        console.log('newCj' + S + '[' + divIndex + '].cJ.push(divJson)')
-        eval('newCj' + S + '[' + divIndex + '].cJ.push(divJson)')
+        if (addRule === 'T' || addRule === 'B'){
+          eval('newCj' + S + '[' + divIndex + '].cJ.包裹一層array 再Push')
+        } else {
+          eval('newCj' + S + '[' + divIndex + '].cJ.push(divJson)')
+        }
+        
       }
 
       this.setState({cJ: newCj})
@@ -123,7 +148,7 @@ $(function () {
             data-role='drag-drop-container'
             onDrop={this.dropped}
             onDragEnter={this.cancelDefault}
-            onDragOver={this.dragoverGoYellow}
+            onDragOver={this.dragoverGoSlect}
             onDragLeave={this.dragleaveGoBack}
           >
             {this.mapToCreatDiv(this.state.cJ)}
