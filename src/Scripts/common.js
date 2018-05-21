@@ -6,45 +6,116 @@ $(function () {
   // console.log($)
   // console.log(React)
 
-
   class MenuAndOperatingArea extends React.Component {
     constructor () {
       super()
       // contentJson 縮寫成 cJ
       this.state = {
-        cJ: []
+        cJ: [
+          [
+            {
+              cJ: []
+            },
+            {
+              cJ: []
+            }
+          ],
+          [
+            {
+              cJ: [[{
+                cJ: []
+              }], [{
+                cJ: []
+              }]]
+            },
+            {
+              cJ: [[{
+                cJ: []
+              }], [{
+                cJ: []
+              }]]
+            }
+          ]
+        ]
       }
       this.dropped = this.dropped.bind(this)
       this.dragoverGoSlect = this.dragoverGoSlect.bind(this)
     }
 
-    mapToCreatDiv (cJdata) {
+    mapToCreatDiv (cJdata, previousKey) {
+      console.log(cJdata)
+      console.log(previousKey)
       return cJdata.map((node, index) => {
-        let divStyle = {'width': 100 / cJdata.length + '%'}
-        if (node.cJ.length) { // 如果node的cJ 裡面還是有東西 靠遞迴自己叫自己
-          return (
-            <div
-              key={index}
-              style={divStyle}
-              onDrop={this.dropped}
-              onDragEnter={this.cancelDefault}
-              onDragOver={this.dragoverGoSlect}
-              onDragLeave={this.dragleaveGoBack}
-            >
-              {this.mapToCreatDiv(node.cJ)}
-            </div>
-          )
+        var myKey = previousKey ? previousKey + '-' + index : index
+        if (node.cJ) {
+          // 代表 node 是 {}
+          let divStyle = {'width': 100 / cJdata.length + '%'}
+          if (node.cJ.length) {
+            // 如果node的cJ 裡面還是有東西(而且node是{}) 靠遞迴自己叫自己
+            return (
+              <div
+                id={myKey}
+                key={myKey}
+                style={divStyle}
+                onDrop={this.dropped}
+                onDragEnter={this.cancelDefault}
+                onDragOver={this.dragoverGoSlect}
+                onDragLeave={this.dragleaveGoBack}
+              >
+                {this.mapToCreatDiv(node.cJ, myKey)}
+              </div>
+            )
+          } else {
+            return (
+              <div
+                id={myKey}
+                key={myKey}
+                style={divStyle}
+                onDrop={this.dropped}
+                onDragEnter={this.cancelDefault}
+                onDragOver={this.dragoverGoSlect}
+                onDragLeave={this.dragleaveGoBack}
+              />
+            )
+          }
         } else {
-          return (
-            <div
-              key={index}
-              style={divStyle}
-              onDrop={this.dropped}
-              onDragEnter={this.cancelDefault}
-              onDragOver={this.dragoverGoSlect}
-              onDragLeave={this.dragleaveGoBack}
-            />
-          )
+          // 代表 node 是 []
+          if (node.length === 1) {
+            return (
+              <div
+                id={myKey}
+                key={myKey}
+                onDrop={this.dropped}
+                onDragEnter={this.cancelDefault}
+                onDragOver={this.dragoverGoSlect}
+                onDragLeave={this.dragleaveGoBack}
+              >
+                {this.mapToCreatDiv(node[0].cJ, myKey)}
+              </div>
+            )
+          } else {
+            // 並排兩個以上
+            let divStyle = {'width': 100 / node.length + '%'}
+            var sideBySideDom = node.map((node_, index_) => {
+              var sideBySideKey = myKey + '-' + index_
+              return (
+                <div
+                  id={sideBySideKey}
+                  key={sideBySideKey}
+                  style={divStyle}
+                  onDrop={this.dropped}
+                  onDragEnter={this.cancelDefault}
+                  onDragOver={this.dragoverGoSlect}
+                  onDragLeave={this.dragleaveGoBack}
+                  >
+                  {this.mapToCreatDiv(node_.cJ, sideBySideKey)}
+                </div>
+              )
+            })
+            return (
+              <div id={myKey} key={myKey}>{sideBySideDom}</div>
+            )
+          }
         }
       })
     }
@@ -59,8 +130,7 @@ $(function () {
       return false
     }
 
-    mousePosition (e) {
-      // 需要得知游標的位置靠近哪裡? 上/下/左/右
+    mousePosition (e) { // 需要得知游標的位置靠近哪裡? 上/下/左/右/中間
       var $target = $(e.currentTarget)
       let offset = $target.offset()
       let $bottom = offset.top + $target.innerHeight()
@@ -71,21 +141,20 @@ $(function () {
       let mouseLeft = e.clientX
       let mouseTop = e.clientY
 
-      if ( $left + 100 > mouseLeft && $left < mouseLeft) { return ('L') }
-      if ( mouseLeft > $right - 100 && mouseLeft < $right) { return ('R') }
-      if ( $top + 100 > mouseTop && $top < mouseTop) { return ('T') }
-      if ( mouseTop > $bottom - 100 && mouseTop < $bottom) { return ('B') }
+      if ($left + 100 > mouseLeft && $left < mouseLeft) { return ('L') }
+      if (mouseLeft > $right - 100 && mouseLeft < $right) { return ('R') }
+      if ($top + 100 > mouseTop && $top < mouseTop) { return ('T') }
+      if (mouseTop > $bottom - 100 && mouseTop < $bottom) { return ('B') }
       return ('C')
     }
-
 
     dragoverGoSlect (e) { // 被拉到的時候變成黃色
       var $target = $(e.currentTarget)
       var nowClass = $target.attr('class')
       let addRule = this.mousePosition(e)
-      if ( nowClass && nowClass.indexOf(addRule) === -1 ){
+      if (nowClass && nowClass.indexOf(addRule) === -1) {
         // 表示CLASS上下左右該換了
-        var oldClass = nowClass.substring(nowClass.length-1)
+        var oldClass = nowClass.substring(nowClass.length - 1)
         $target.removeClass(oldClass)
       }
       $target.addClass('Slect ' + addRule)
@@ -103,13 +172,12 @@ $(function () {
       let divIndex = $(e.currentTarget).prevAll().length // 得知該DIV再同輩順位幾
       let newCj = this.state.cJ
       let addRule = this.mousePosition(e)
-      let divJson
-      if (addRule === 'T' || addRule === 'B'){
+      let divJson = {cJ: []}
+      /* if (addRule === 'T' || addRule === 'B') {
         divJson = [{cJ: []}]
       } else {
         divJson = {cJ: []}
-      }
-      
+      } */
 
       if (divLevels < 0) {
         newCj.push(divJson)
@@ -122,12 +190,17 @@ $(function () {
           S = S + '[' + papaLength + '].cJ'
         }
 
-        if (addRule === 'T' || addRule === 'B'){
-          eval('newCj' + S + '[' + divIndex + '].cJ.包裹一層array 再Push')
-        } else {
+        /* if (addRule === 'T' || addRule === 'B') {
+          var AAA = eval('newCj' + S + '[' + divIndex + '].cJ')
+          var BBB = [].push(AAA)
+
+          eval('newCj' + S + '.splice(' + divIndex + ',1,' + BBB + ')')
+
           eval('newCj' + S + '[' + divIndex + '].cJ.push(divJson)')
-        }
-        
+        } else {
+
+        } */
+        eval('newCj' + S + '[' + divIndex + '].cJ.push(divJson)')
       }
 
       this.setState({cJ: newCj})
