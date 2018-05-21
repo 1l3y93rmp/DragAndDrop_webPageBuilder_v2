@@ -12,39 +12,14 @@ $(function () {
       // contentJson 縮寫成 cJ
       this.state = {
         cJ: [
-          [
-            {
-              cJ: []
-            },
-            {
-              cJ: []
-            }
-          ],
-          [
-            {
-              cJ: [[{
-                cJ: []
-              }], [{
-                cJ: []
-              }]]
-            },
-            {
-              cJ: [[{
-                cJ: []
-              }], [{
-                cJ: []
-              }]]
-            }
-          ]
         ]
       }
+      // 陣列 內的陣列必須與陣列並排 不然沒有意義
       this.dropped = this.dropped.bind(this)
       this.dragoverGoSlect = this.dragoverGoSlect.bind(this)
     }
 
     mapToCreatDiv (cJdata, previousKey) {
-      console.log(cJdata)
-      console.log(previousKey)
       return cJdata.map((node, index) => {
         var myKey = previousKey ? previousKey + '-' + index : index
         if (node.cJ) {
@@ -113,7 +88,7 @@ $(function () {
               )
             })
             return (
-              <div id={myKey} key={myKey}>{sideBySideDom}</div>
+              <div class='frame' id={myKey} key={myKey}>{sideBySideDom}</div>
             )
           }
         }
@@ -141,10 +116,10 @@ $(function () {
       let mouseLeft = e.clientX
       let mouseTop = e.clientY
 
-      if ($left + 100 > mouseLeft && $left < mouseLeft) { return ('L') }
-      if (mouseLeft > $right - 100 && mouseLeft < $right) { return ('R') }
-      if ($top + 100 > mouseTop && $top < mouseTop) { return ('T') }
-      if (mouseTop > $bottom - 100 && mouseTop < $bottom) { return ('B') }
+      if ($left + 20 > mouseLeft && $left < mouseLeft) { return ('L') }
+      if (mouseLeft > $right - 20 && mouseLeft < $right) { return ('R') }
+      if ($top + 20 > mouseTop && $top < mouseTop) { return ('T') }
+      if (mouseTop > $bottom - 20 && mouseTop < $bottom) { return ('B') }
       return ('C')
     }
 
@@ -166,44 +141,30 @@ $(function () {
     }
 
     dropped (e) { // 被綁在要被放東西進來的框框(#operatingArea) onDrop時調用這個方法
-      $(e.currentTarget).removeClass('Slect')
-      let divLevels = $(e.currentTarget).parents().length - 4// 得知該DIV往外有幾層
-      // -4 是因為 Html Body #content #operatingArea 這4層不要
-      let divIndex = $(e.currentTarget).prevAll().length // 得知該DIV再同輩順位幾
-      let newCj = this.state.cJ
-      let addRule = this.mousePosition(e)
-      let divJson = {cJ: []}
-      /* if (addRule === 'T' || addRule === 'B') {
-        divJson = [{cJ: []}]
-      } else {
-        divJson = {cJ: []}
-      } */
+      // let newCj = this.state.cJ
+      var $target = $(e.currentTarget)
+      $target.removeClass('Slect')
 
-      if (divLevels < 0) {
-        newCj.push(divJson)
-      } else {
-        let S = '' // 空字串
+      var targetInJsonIs = this.state.cJ
 
-        for (var i = 0; i < divLevels; i++) {
-          // 爸爸的順序是...?
-          let papaLength = $(e.currentTarget).parents().eq(i).prevAll().length
-          S = S + '[' + papaLength + '].cJ'
+      var level = $target.attr('id').split('-')
+
+      if (/\d/g.test(level[0])) {
+        for (var i = 0; i < level.length; i++) {
+          targetInJsonIs = targetInJsonIs[level[i]]
+          try {
+            if (targetInJsonIs.length === 1) {
+              targetInJsonIs = targetInJsonIs[0]
+            }
+          } catch (err) {
+            console.log('targetInJsonIs 不是陣列~')
+          }
         }
-
-        /* if (addRule === 'T' || addRule === 'B') {
-          var AAA = eval('newCj' + S + '[' + divIndex + '].cJ')
-          var BBB = [].push(AAA)
-
-          eval('newCj' + S + '.splice(' + divIndex + ',1,' + BBB + ')')
-
-          eval('newCj' + S + '[' + divIndex + '].cJ.push(divJson)')
-        } else {
-
-        } */
-        eval('newCj' + S + '[' + divIndex + '].cJ.push(divJson)')
       }
 
-      this.setState({cJ: newCj})
+      console.log(targetInJsonIs)
+
+      // this.setState({cJ: newCj})
       this.cancelDefault(e)
     }
 
