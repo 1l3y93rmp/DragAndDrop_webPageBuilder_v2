@@ -11,17 +11,27 @@ $(function () {
       super()
       // contentJson 縮寫成 cJ
       this.state = {
-        cJ: [
+        // cJ: [{cJ: []}, {cJ: [{cJ: []}, {cJ: []}]}]
+        cJ:
+        [
+          [
+          {cJ: [{cJ: []}, {cJ: [{cJ: []}, {cJ: []}]}]}
+          ],
+          [
+          {cJ: []}, {cJ: []}
+          ]
         ]
       }
-      // 陣列 內的陣列必須與陣列並排 不然沒有意義
+      // 陣列 內如有陣列 必須與陣列並排 不然沒有意義
       this.dropped = this.dropped.bind(this)
       this.dragoverGoSlect = this.dragoverGoSlect.bind(this)
+      this.climbingJsonTrees = this.climbingJsonTrees.bind(this)
     }
 
     mapToCreatDiv (cJdata, previousKey) {
       return cJdata.map((node, index) => {
-        var myKey = previousKey ? previousKey + '-' + index : index
+        var myKey = previousKey === undefined ? index : previousKey + '-' + index
+        // 注意 : myKey 並不紀錄DOM巢狀，而是紀錄JSON資料的巢狀
         if (node.cJ) {
           // 代表 node 是 {}
           let divStyle = {'width': 100 / cJdata.length + '%'}
@@ -58,14 +68,14 @@ $(function () {
           if (node.length === 1) {
             return (
               <div
-                id={myKey}
-                key={myKey}
+                id={myKey + '-0'}
+                key={myKey + '-0'}
                 onDrop={this.dropped}
                 onDragEnter={this.cancelDefault}
                 onDragOver={this.dragoverGoSlect}
                 onDragLeave={this.dragleaveGoBack}
               >
-                {this.mapToCreatDiv(node[0].cJ, myKey)}
+                {this.mapToCreatDiv(node[0].cJ, myKey + '-0')}
               </div>
             )
           } else {
@@ -88,11 +98,46 @@ $(function () {
               )
             })
             return (
-              <div class='frame' id={myKey} key={myKey}>{sideBySideDom}</div>
+              <div
+                id={myKey}
+                key={myKey}
+                data-frame='true'
+                onDrop={this.dropped}
+                onDragEnter={this.cancelDefault}
+                onDragOver={this.dragoverGoSlect}
+                onDragLeave={this.dragleaveGoBack}
+                >
+                {sideBySideDom}
+              </div>
             )
           }
         }
       })
+    }
+
+    climbingJsonTrees (json, level) {
+      // 當收到操作時，爬Json樹
+      if (!/\d/g.test(level[0])) return json
+      // 如果是最外層 直接不要爬了 出去
+
+      if (level.length === 0) return // 已爬完
+
+      var leftoverJson
+      // 要先知道傳進來的這棵樹是{} 還是 [] 才知道要怎麼爬
+      if (json.constructor === Array) {
+        // 這代表Json 是 []
+        console.log('是 []')
+        leftoverJson = json[level[0]]
+      } else if (json.constructor === Object) {
+        // 這代表Json 是 {}
+        console.log('是 {}')
+        leftoverJson = json.cJ[level[0]]
+      }
+
+      level.shift()
+      var leftoverLevel = level
+      console.log(leftoverJson)
+      this.climbingJsonTrees(leftoverJson, leftoverLevel) // 繼續把沒爬完的枝爬完
     }
 
     ondragstart (e) { // 被綁在被拖的東西的 (#menu內的)
@@ -141,28 +186,12 @@ $(function () {
     }
 
     dropped (e) { // 被綁在要被放東西進來的框框(#operatingArea) onDrop時調用這個方法
-      // let newCj = this.state.cJ
       var $target = $(e.currentTarget)
-      $target.removeClass('Slect')
+      $target.removeClass('Slect L R C T B')
 
-      var targetInJsonIs = this.state.cJ
-
+      var newCj = this.state.cJ
       var level = $target.attr('id').split('-')
-
-      if (/\d/g.test(level[0])) {
-        for (var i = 0; i < level.length; i++) {
-          targetInJsonIs = targetInJsonIs[level[i]]
-          try {
-            if (targetInJsonIs.length === 1) {
-              targetInJsonIs = targetInJsonIs[0]
-            }
-          } catch (err) {
-            console.log('targetInJsonIs 不是陣列~')
-          }
-        }
-      }
-
-      console.log(targetInJsonIs)
+      this.climbingJsonTrees(newCj, level) // 傳入被爬的對像與指定層級
 
       // this.setState({cJ: newCj})
       this.cancelDefault(e)
@@ -170,7 +199,6 @@ $(function () {
 
     render () {
       // render operatingArea 時 會參照 State 內的資料
-      console.log(this.state.cJ)
       return (
         <React.Fragment>
           <div id='menu'>
