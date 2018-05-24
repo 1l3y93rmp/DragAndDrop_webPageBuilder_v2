@@ -11,9 +11,8 @@ $(function () {
       super()
       // contentJson 縮寫成 cJ
       this.state = {
-        // cJ: [{cJ: []}, {cJ: [{cJ: []}, {cJ: []}]}]
-        cJ:
-        [[{cJ: [{cJ: []}, {cJ: []}]}], [{cJ: []}]]
+        cJ: [{cJ: []}, {cJ: [{cJ: []}, {cJ: []}]}]
+        // cJ:[[{cJ: [{cJ: []}, {cJ: []}]}], [{cJ: [{cJ: []}, {cJ: []}]}]]
       }
 
       // 陣列 內如有陣列 必須與陣列並排 不然沒有意義
@@ -38,44 +37,25 @@ $(function () {
       // Way是操縱的方法 (上下左右中)
 
       console.log(JsonBranch) // 這裡先反應還沒加過的JS
-      /*
+      
       var objectBlankDiv = {cJ: []}
       var arrayBlankDiv = [{cJ: []}]
       var JsonBranchAddtoArray = [JsonBranch]
       var ObjIsObject = this.jsonIsWhichObj(JsonBranch)
       // 先得知 JsonBranch是{} 或是 []
       if (!ObjIsObject) {
-        if (/[R]/g.test(way)) {
-          // 插入右方
-          JsonBranch.push(objectBlankDiv)
-        }
-        if (/[L]/g.test(way)) {
-          // 插入左方
-          JsonBranch.unshift(objectBlankDiv)
-        }
+        // 如果是[]
+        console.log('編輯對象是[]')
+
+        
+
       } else if (ObjIsObject) {
-        if (JsonBranch.cJ.length === 0) {
-          // 如果當陣列為空 直接丟一個 {cJ: []} objectBlankDiv 進去 不用管上下左右中
-          JsonBranch.cJ.push(objectBlankDiv)
-        } else {
-          // 如果陣列內有東西，就要注意插入位置，並且不允許 "插入中間"這種操作
-          if (/[R]/g.test(way)) {
-            // 插入右方
-            JsonBranch.cJ.push(objectBlankDiv)
-          } else if (/[L]/g.test(way)) {
-            // 插入左方
-            JsonBranch.cJ.unshift(objectBlankDiv)
-          } else if (/[T]/g.test(way)) {
-            // 如果是插入上方 需要將原本 JsonBranch.cJ 內的東西包起來 再加入一個 arrayBlankDiv
-            JsonBranch.cJ = [arrayBlankDiv, JsonBranchAddtoArray]
-          } else if (/[B]/g.test(way)) {
-            // 插入下方 同插入上方 只是位置不同
-            JsonBranch.cJ = [JsonBranchAddtoArray, arrayBlankDiv]
-          }
-        }
+        // 如果是{}
+        console.log('編輯對象是{}')
+        
       }
-      console.log(JsonBranch) // 這裡會被反應加過的JS
-      */
+      // console.log(JsonBranch) // 這裡會被反應加過的JS
+      
     }
 
     climbingJsonTrees (json, level) {
@@ -196,9 +176,12 @@ $(function () {
 
       var newCj = this.state.cJ
       var level = $target.attr('id').split('-')
-
+      if ( /[a-z]/g.test(operatingWay)) {
+        level.pop()
+      }
       this.changeJsonTrees(newCj, level, this.climbingJsonTrees(newCj, level), operatingWay)
-       // 傳入被爬的對像與指定層級與操作方法
+       // 傳入被爬的對像與指定層級與操作方法給改變JsonTrees的方法
+       // 其中得到枝子的方法是通由爬樹方法找到的
 
       // this.setState({cJ: newCj})
       this.cancelDefault(e)
