@@ -34,6 +34,7 @@
     transition: all .3s
   [data-row]
     width: 100%
+    padding: 0 15px
 .Slect
   z-index: 1
   position: relative
@@ -89,9 +90,13 @@
     height: calc( 100% - 40px )
   &.l::after
     border-right: 1px solid #ccc
+    border-left: 1px solid #ccc
+    left: -20px
   &.r::after
     border-left: 1px solid #ccc
   &.t::after
+    top: -20px
+    border-top: 1px solid #ccc
     border-bottom: 1px solid #ccc
   &.b::after
     border-top: 1px solid #ccc

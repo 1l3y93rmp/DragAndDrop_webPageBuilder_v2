@@ -13,7 +13,7 @@ $(function () {
       this.state = {
         // cJ: [{cJ: []}, {cJ: [{cJ: []}, {cJ: []}]}]
         cJ:
-        [[{cJ: []}, {cJ: []}], [{cJ: []}]]
+        [[{cJ: [{cJ: []}, {cJ: []}]}], [{cJ: []}]]
       }
 
       // 陣列 內如有陣列 必須與陣列並排 不然沒有意義
@@ -29,95 +29,6 @@ $(function () {
       } else if (obj.constructor === Array) {
         return false
       }
-    }
-
-    mapToCreatDiv (cJdata, previousKey) {
-      return cJdata.map((node, index) => {
-        var myKey = previousKey === undefined ? index : previousKey + '-' + index
-        // 注意 : myKey 並不紀錄DOM巢狀，而是紀錄JSON資料的巢狀
-        var ObjIsObject = this.jsonIsWhichObj(node)
-        if (ObjIsObject) {
-          // 代表 node 是 {}
-          let divStyle = {'width': 100 / cJdata.length + '%'}
-          if (node.cJ.length) {
-            // 如果node的cJ 裡面還是有東西(而且node是{}) 靠遞迴自己叫自己
-            return (
-              <div
-                id={myKey}
-                key={index}
-                style={divStyle}
-                onDrop={this.dropped}
-                onDragEnter={this.cancelDefault}
-                onDragOver={this.dragoverGoSlect.bind(null, true, false, false)}
-                onDragLeave={this.dragleaveGoBack}
-              >
-                {this.mapToCreatDiv(node.cJ, myKey)}
-              </div>
-            )
-          } else {
-            return (
-              <div
-                id={myKey}
-                key={index}
-                style={divStyle}
-                onDrop={this.dropped}
-                onDragEnter={this.cancelDefault}
-                onDragOver={this.dragoverGoSlect.bind(null, false, false, false)}
-                onDragLeave={this.dragleaveGoBack}
-              />
-            )
-          }
-        } else if (!ObjIsObject) {
-          // 代表 node 是 []
-          if (node.length === 1) {
-            return (
-              <div
-                id={myKey + '-0'}
-                key={index}
-                data-row='true'
-                onDrop={this.dropped}
-                onDragEnter={this.cancelDefault}
-                onDragOver={this.dragoverGoSlect.bind(null, false, true, false)}
-                onDragLeave={this.dragleaveGoBack}
-              >
-                {this.mapToCreatDiv(node[0].cJ, myKey + '-0')}
-              </div>
-            )
-          } else {
-            // 並排兩個以上
-            let divStyle = {'width': 100 / node.length + '%'}
-            var sideBySideDom = node.map((node_, index_) => {
-              var sideBySideKey = myKey + '-' + index_
-              return (
-                <div
-                  id={sideBySideKey}
-                  key={index_}
-                  style={divStyle}
-                  onDrop={this.dropped}
-                  onDragEnter={this.cancelDefault}
-                  onDragOver={this.dragoverGoSlect.bind(null, node_.cJ.length, false, true)}
-                  onDragLeave={this.dragleaveGoBack}
-                  >
-                  {this.mapToCreatDiv(node_.cJ, sideBySideKey)}
-                </div>
-              )
-            })
-            return (
-              <div
-                id={myKey}
-                key={index}
-                data-row='true'
-                onDrop={this.dropped}
-                onDragEnter={this.cancelDefault}
-                onDragOver={this.dragoverGoSlect.bind(null, true, true, false)}
-                onDragLeave={this.dragleaveGoBack}
-                >
-                {sideBySideDom}
-              </div>
-            )
-          }
-        }
-      })
     }
 
     changeJsonTrees (json, level, JsonBranch, way) { // 改變樹枝
@@ -209,7 +120,17 @@ $(function () {
     mousePosition (isWrap, ctrlOutSiteTB, ctrlOutSiteLR, e) { // 得知游標的位置靠近哪裡給予相對應的CLASS名稱 內側/外側 / 上/下/左/右/中間 是否開啟某些特殊的感應區?
       var $target = $(e.currentTarget)
 
+      // 判斷DIV的順序 或是它是否為data-row來決定他是否能夠出現哪些被拖曳時的Class
+      var targetIndex = $target.attr('id').split('-')
+
+      // 該DIV本身是不是 Row ?
+      var isRow = $target.attr('data-row')
+      targetIndex = isRow ? targetIndex[targetIndex.length - 2] : targetIndex[targetIndex.length - 1]
+
+      // 是否控制外部LR 得要往父輩一層確認有無 data-row (因為這沒有辦法從 mapToCreatDiv 時就傳來)
+      ctrlOutSiteLR = !!$target.parent().attr('data-row')
       let offset = $target.offset()
+
       let $bottom = offset.top + $target.innerHeight()
       let $right = offset.left + $target.innerWidth()
       let $top = offset.top
@@ -217,23 +138,25 @@ $(function () {
 
       let mouseLeft = e.clientX
       let mouseTop = e.clientY
-
+      console.log(isWrap)
       // 編輯內側 CLASS大寫
       // 編輯外側 CLASS小寫
 
       // 如果可控外部TB (必定是row)
-      if ($top + 40 > mouseTop && $top < mouseTop && ctrlOutSiteTB) { return ('t') }
-      if (mouseTop > $bottom - 40 && mouseTop < $bottom && ctrlOutSiteTB) { return ('b') }
+
+      if ($top + 40 > mouseTop && $top < mouseTop && ctrlOutSiteTB && targetIndex !== '0') { return ('t') }
+      // if (mouseTop > $bottom - 40 && mouseTop < $bottom && ctrlOutSiteTB) { return ('b') }
 
       // 如果可控外部LR (必定是row下層)
-      if ($left + 40 > mouseLeft && $left < mouseLeft && ctrlOutSiteLR) { return ('l') }
-      if (mouseLeft > $right - 40 && mouseLeft < $right && ctrlOutSiteLR) { return ('r') }
+
+      if ($left + 40 > mouseLeft && $left < mouseLeft && ctrlOutSiteLR && targetIndex !== '0') { return ('l') }
+      // if (mouseLeft > $right - 40 && mouseLeft < $right && ctrlOutSiteLR) { return ('r') }
 
       // 如果有包東西 可操作內側
       if ($left + 40 > mouseLeft && $left < mouseLeft && isWrap) { return ('L') }
       if (mouseLeft > $right - 40 && mouseLeft < $right && isWrap) { return ('R') }
-      if ($top + 40 > mouseTop && $top < mouseTop && isWrap) { return ('T') }
-      if (mouseTop > $bottom - 40 && mouseTop < $bottom && isWrap) { return ('B') }
+      if ($top + 40 > mouseTop && $top < mouseTop && isWrap && !isRow) { return ('T') }
+      if (mouseTop > $bottom - 40 && mouseTop < $bottom && isWrap && !isRow) { return ('B') }
 
       if (!isWrap) { return ('C') }
       return 'X' // 沒Class的意思
@@ -244,14 +167,14 @@ $(function () {
       var nowClass = $target.attr('class')
       if (nowClass) {
         nowClass = nowClass.substr(nowClass.length - 1)
-        // 我只要判斷最後一個字母
+        // 只要判斷最後一個字母
       }
       let addRule = this.mousePosition(isWrap, ctrlOutSiteTB, ctrlOutSiteLR, e)
       if (addRule === 'X') {
         $target.removeClass('Slect L R C T B l r b t X')
       } else {
         if (nowClass && nowClass.indexOf(addRule) === -1) {
-          // 表示CLASS上下左右該換了
+          // 表示CLASS該換了
           var oldClass = nowClass.substring(nowClass.length - 1)
           $target.removeClass(oldClass)
         }
@@ -279,6 +202,95 @@ $(function () {
 
       // this.setState({cJ: newCj})
       this.cancelDefault(e)
+    }
+
+    mapToCreatDiv (cJdata, previousKey) {
+      return cJdata.map((node, index) => {
+        var myKey = previousKey === undefined ? index : previousKey + '-' + index
+        // 注意 : myKey 並不紀錄DOM巢狀，而是紀錄JSON資料的巢狀
+        var ObjIsObject = this.jsonIsWhichObj(node)
+        if (ObjIsObject) {
+          // 代表 node 是 {}
+          let divStyle = {'width': 100 / cJdata.length + '%'}
+          if (node.cJ.length) {
+            // 如果node的cJ 裡面還是有東西(而且node是{}) 靠遞迴自己叫自己
+            return (
+              <div
+                id={myKey}
+                key={index}
+                style={divStyle}
+                onDrop={this.dropped}
+                onDragEnter={this.cancelDefault}
+                onDragOver={this.dragoverGoSlect.bind(null, true, false, false)}
+                onDragLeave={this.dragleaveGoBack}
+              >
+                {this.mapToCreatDiv(node.cJ, myKey)}
+              </div>
+            )
+          } else {
+            return (
+              <div
+                id={myKey}
+                key={index}
+                style={divStyle}
+                onDrop={this.dropped}
+                onDragEnter={this.cancelDefault}
+                onDragOver={this.dragoverGoSlect.bind(null, false, false, false)}
+                onDragLeave={this.dragleaveGoBack}
+              />
+            )
+          }
+        } else if (!ObjIsObject) {
+          // 代表 node 是 []
+          if (node.length === 1) {
+            return (
+              <div
+                id={myKey + '-0'}
+                key={index}
+                data-row='true'
+                onDrop={this.dropped}
+                onDragEnter={this.cancelDefault}
+                onDragOver={this.dragoverGoSlect.bind(null, node[0].cJ.length, true, false)}
+                onDragLeave={this.dragleaveGoBack}
+              >
+                {this.mapToCreatDiv(node[0].cJ, myKey + '-0')}
+              </div>
+            )
+          } else {
+            // 並排兩個以上
+            let divStyle = {'width': 100 / node.length + '%'}
+            var sideBySideDom = node.map((node_, index_) => {
+              var sideBySideKey = myKey + '-' + index_
+              return (
+                <div
+                  id={sideBySideKey}
+                  key={index_}
+                  style={divStyle}
+                  onDrop={this.dropped}
+                  onDragEnter={this.cancelDefault}
+                  onDragOver={this.dragoverGoSlect.bind(null, node_.cJ.length, false, true)}
+                  onDragLeave={this.dragleaveGoBack}
+                  >
+                  {this.mapToCreatDiv(node_.cJ, sideBySideKey)}
+                </div>
+              )
+            })
+            return (
+              <div
+                id={myKey}
+                key={index}
+                data-row='true'
+                onDrop={this.dropped}
+                onDragEnter={this.cancelDefault}
+                onDragOver={this.dragoverGoSlect.bind(null, true, true, false)}
+                onDragLeave={this.dragleaveGoBack}
+                >
+                {sideBySideDom}
+              </div>
+            )
+          }
+        }
+      })
     }
 
     render () {
