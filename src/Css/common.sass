@@ -32,8 +32,9 @@
     background-color: #fff
     z-index: 2
     transition: all .3s
+  [data-row]
+    width: 100%
 .Slect
-  background-color: #fffbd3 !important
   z-index: 1
   position: relative
   &.L, &.R, &.T, &.B, &.C
@@ -42,34 +43,61 @@
       display: block
       color: #fff
       position: absolute
-      background: url('')
+      background: url('../img/plas.png') center no-repeat
       z-index: -1
-  &.L::after
-    left: 0
-    top: 0
-    width: 20px
-    height: 100%
-  &.T::after
-    left: 0
-    top: 0
-    width: 100%
-    height: 20px
-  &.R::after
-    right: 0
-    top: 0
-    width: 20px
-    height: 100%
-  &.B::after
-    left: 0
-    bottom: 0
-    width: 100%
-    height: 20px
+  &.l, &.r, &.b, &.t
+    &::after
+      content: ''
+      display: block
+      color: #fff
+      position: absolute
+      background: url('../img/plas_outsite.png') center no-repeat #fff
+      z-index: -1
+  &.L,&.l
+    padding-left: 40px !important
+    &::after
+      left: 0
+      top: 0
+      width: 40px
+      height: 100%
+  &.T, &.t
+    padding-top: 40px !important
+    &::after
+      left: 0
+      top: 0
+      width: 100%
+      height: 40px
+  &.R, &.r
+    padding-right: 40px !important
+    &::after
+      right: 0
+      top: 0
+      width: 40px
+      height: 100%
+  &.B, &.b
+    padding-bottom: 40px !important
+    &::after
+      left: 0
+      bottom: 0
+      width: 100%
+      height: 40px
   &.C::after
     left: 20px
     top: 20px
+    background-color: #fffbd3
     width: calc( 100% - 40px )
     height: calc( 100% - 40px )
-.frame
+  &.l::after
+    border-right: 1px solid #ccc
+  &.r::after
+    border-left: 1px solid #ccc
+  &.t::after
+    border-bottom: 1px solid #ccc
+  &.b::after
+    border-top: 1px solid #ccc
+
+
+
     
   
     
