@@ -11,8 +11,8 @@ $(function () {
       super()
       // contentJson 縮寫成 cJ
       this.state = {
-        cJ: [{cJ: []}, {cJ: [{cJ: []}, {cJ: []}]}]
-        // cJ:[[{cJ: [{cJ: []}, {cJ: []}]}], [{cJ: [{cJ: []}, {cJ: []}]}]]
+        // cJ: [{cJ: []}, {cJ: []}, {cJ: [[{cJ: []}], [{cJ: []}]]}]
+        cJ: [[{cJ: [{cJ: []}, {cJ: []}]}], [{cJ: [{cJ: []}, {cJ: []}]}]]
       }
 
       // 陣列 內如有陣列 必須與陣列並排 不然沒有意義
@@ -37,28 +37,25 @@ $(function () {
       // Way是操縱的方法 (上下左右中)
 
       console.log(JsonBranch) // 這裡先反應還沒加過的JS
-      
-      var objectBlankDiv = {cJ: []}
-      var arrayBlankDiv = [{cJ: []}]
-      var JsonBranchAddtoArray = [JsonBranch]
+
+      var objectBlankDiv = {cJ: []} // 新增的東西兩種歡迎自由取用
+      var arrayBlankDiv = [{cJ: []}] // 第二種
+      var JsonBranchAddtoArray = [JsonBranch] // 這邊有把舊的Json小枝 用[]包起來
+      var JsonBranchAddtoObject = {cJ: JsonBranch} // 這邊也有把舊的Json小枝 用{}包起來
+
       var ObjIsObject = this.jsonIsWhichObj(JsonBranch)
-      // 先得知 JsonBranch是{} 或是 []
+      // 先得知 JsonBranch是{} 或是 []， 丟進去
       if (!ObjIsObject) {
         // 如果是[]
-        console.log('編輯對象是[]')
-
-        
-
+        console.log('編輯對象是[]，直接操作[]')
       } else if (ObjIsObject) {
         // 如果是{}
-        console.log('編輯對象是{}')
-        
+        console.log('編輯對象是{}，操作{}裡面的cJ特性~')
       }
       // console.log(JsonBranch) // 這裡會被反應加過的JS
-      
     }
 
-    climbingJsonTrees (json, level) {
+    climbingJsonTrees (json, level) { // 爬Json樹 回應枝子
       // 當收到操作時，爬Json樹
       if (!/\d/g.test(level[0])) return this.state
       // 如果是最外層 直接不要爬了 出去
@@ -107,10 +104,10 @@ $(function () {
       var isRow = $target.attr('data-row')
       targetIndex = isRow ? targetIndex[targetIndex.length - 2] : targetIndex[targetIndex.length - 1]
 
-      // 是否控制外部LR 得要往父輩一層確認有無 data-row (因為這沒有辦法從 mapToCreatDiv 時就傳來)
-      ctrlOutSiteLR = !!$target.parent().attr('data-row')
-      let offset = $target.offset()
+      // 是否控制外部LR? 如果自己是Row 禁止操控外部LR，接下來就看是否有同輩
+      ctrlOutSiteLR = isRow ? false : $target.siblings().length
 
+      let offset = $target.offset()
       let $bottom = offset.top + $target.innerHeight()
       let $right = offset.left + $target.innerWidth()
       let $top = offset.top
@@ -118,7 +115,7 @@ $(function () {
 
       let mouseLeft = e.clientX
       let mouseTop = e.clientY
-      console.log(isWrap)
+
       // 編輯內側 CLASS大寫
       // 編輯外側 CLASS小寫
 
@@ -127,14 +124,16 @@ $(function () {
       if ($top + 40 > mouseTop && $top < mouseTop && ctrlOutSiteTB && targetIndex !== '0') { return ('t') }
       // if (mouseTop > $bottom - 40 && mouseTop < $bottom && ctrlOutSiteTB) { return ('b') }
 
-      // 如果可控外部LR (必定是row下層)
+      // 如果可控外部LR
 
-      if ($left + 40 > mouseLeft && $left < mouseLeft && ctrlOutSiteLR && targetIndex !== '0') { return ('l') }
+      console.log(ctrlOutSiteLR, targetIndex)
+      if ($left + 5 > mouseLeft && $left < mouseLeft && ctrlOutSiteLR && targetIndex !== '0') { return ('l') }
       // if (mouseLeft > $right - 40 && mouseLeft < $right && ctrlOutSiteLR) { return ('r') }
 
       // 如果有包東西 可操作內側
-      if ($left + 40 > mouseLeft && $left < mouseLeft && isWrap) { return ('L') }
+      if ($left + 40 > mouseLeft + 5 && $left < mouseLeft && isWrap) { return ('L') }
       if (mouseLeft > $right - 40 && mouseLeft < $right && isWrap) { return ('R') }
+
       if ($top + 40 > mouseTop && $top < mouseTop && isWrap && !isRow) { return ('T') }
       if (mouseTop > $bottom - 40 && mouseTop < $bottom && isWrap && !isRow) { return ('B') }
 
@@ -176,7 +175,7 @@ $(function () {
 
       var newCj = this.state.cJ
       var level = $target.attr('id').split('-')
-      if ( /[a-z]/g.test(operatingWay)) {
+      if (/[a-z]/g.test(operatingWay)) {
         level.pop()
       }
       this.changeJsonTrees(newCj, level, this.climbingJsonTrees(newCj, level), operatingWay)
@@ -285,14 +284,16 @@ $(function () {
               onDragStart={this.ondragstart}
             > 添加一個框框 </div>
           </div>
-          <div id='operatingArea'
-            data-role='drag-drop-container'
-            onDrop={this.dropped}
-            onDragEnter={this.cancelDefault}
-            onDragOver={this.dragoverGoSlect.bind(null, this.state.cJ.length, false, false)}
-            onDragLeave={this.dragleaveGoBack}
-          >
-            {this.mapToCreatDiv(this.state.cJ)}
+          <div>
+            <div id='operatingArea'
+              data-role='drag-drop-container'
+              onDrop={this.dropped}
+              onDragEnter={this.cancelDefault}
+              onDragOver={this.dragoverGoSlect.bind(null, this.state.cJ.length, false, false)}
+              onDragLeave={this.dragleaveGoBack}
+            >
+              {this.mapToCreatDiv(this.state.cJ)}
+            </div>
           </div>
         </React.Fragment>
       )
