@@ -19,7 +19,7 @@ $(function () {
       this.dropped = this.dropped.bind(this)
       this.dragoverGoSlect = this.dragoverGoSlect.bind(this)
       this.climbingJsonTrees = this.climbingJsonTrees.bind(this)
-      this.changeJsonTrees = this.changeJsonTrees.bind(this)
+      this.addJsonTrees = this.addJsonTrees.bind(this)
     }
 
     jsonIsWhichObj (obj) { // 用來判斷JSON最外層是什麼樣的Obj 如果是{} 回應True []回應False
@@ -30,18 +30,21 @@ $(function () {
       }
     }
 
-    changeJsonTrees (json, level, JsonBranch, way) { // 改變樹枝
+    addJsonTrees (json, level, JsonBranch, way) { // 改變樹枝
       // json 必須是完整的整棵樹
       // level 也必須是完整的層級資訊
-      // newJsonBranch 則是未被異動的枝子 (會先經由climbingJsonTrees 得到的末端Json枝子)
+      // JsonBranch 則是未被異動的枝子 (會先經由climbingJsonTrees 得到的末端Json枝子) 注意 它是傳址!直接改它可以指回到 State
       // Way是操縱的方法 (上下左右中)
 
       console.log(JsonBranch) // 這裡先反應還沒加過的JS
 
+      var newJsonBranch = JsonBranch // 由於這樣是傳址 所以newJsonBranch也可以指回到 State
+
+      var copyJsonBranch = JSON.parse(JSON.stringify(JsonBranch)) // Deep Copy，使傳址的Obj 能夠複製一個跟原本不關聯的變數
+
       var objectBlankDiv = {cJ: []} // 新增的東西兩種歡迎自由取用
       var arrayBlankDiv = [{cJ: []}] // 第二種
-      var JsonBranchAddtoArray = [JsonBranch] // 這邊有把舊的Json小枝 用[]包起來
-      var JsonBranchAddtoObject = {cJ: JsonBranch} // 這邊也有把舊的Json小枝 用{}包起來
+      var JsonBranchAddtoArray = [copyJsonBranch.cj] // 這邊有把舊的Json小枝 用[]包起來
 
       var ObjIsObject = this.jsonIsWhichObj(JsonBranch)
       // 先得知 JsonBranch是{} 或是 []， 丟進去
@@ -51,8 +54,53 @@ $(function () {
       } else if (ObjIsObject) {
         // 如果是{}
         console.log('編輯對象是{}，操作{}裡面的cJ特性~')
+
+        if (way === 'C') { // 內側中間
+          newJsonBranch.cJ.push(objectBlankDiv)
+        }
+        if (way === 'L') { // 內側左邊
+          if (this.jsonIsWhichObj(newJsonBranch.cJ[0])) {
+            // newJsonBranch.cJ 內容物是{}
+            newJsonBranch.cJ.unshift(objectBlankDiv)
+          } else {
+            // newJsonBranch.cJ 內容物是[]
+            newJsonBranch.cJ.splice(0, newJsonBranch.cJ.length)
+            newJsonBranch.cJ.push(objectBlankDiv, copyJsonBranch)
+          }
+        }
+
+        if (way === 'R') { // 內側右邊
+          if (this.jsonIsWhichObj(newJsonBranch.cJ[0])) {
+            // newJsonBranch.cJ 內容物是{}
+            newJsonBranch.cJ.push(objectBlankDiv)
+          } else {
+            // newJsonBranch.cJ 內容物是[]
+            newJsonBranch.cJ.splice(0, newJsonBranch.cJ.length)
+            newJsonBranch.cJ.push(copyJsonBranch, objectBlankDiv)
+          }
+        }
+
+        if (way === 'T') { // 內側上方
+          if (this.jsonIsWhichObj(newJsonBranch.cJ[0])) {
+            // newJsonBranch.cJ 內容物是{}
+          } else {
+            // newJsonBranch.cJ 內容物是[]
+            newJsonBranch.cJ.unshift(arrayBlankDiv) // OK
+          }
+        }
+
+        if (way === 'B') { // 內側下方
+          if (this.jsonIsWhichObj(newJsonBranch.cJ[0])) {
+            // newJsonBranch.cJ 內容物是{}
+
+          } else {
+            // newJsonBranch.cJ 內容物是[]
+            newJsonBranch.cJ.push(arrayBlankDiv) // OK
+          }
+        }
       }
-      // console.log(JsonBranch) // 這裡會被反應加過的JS
+
+      console.log(newJsonBranch) // 這裡會被反應加過的JS
     }
 
     climbingJsonTrees (json, level) { // 爬Json樹 回應枝子
@@ -126,7 +174,7 @@ $(function () {
 
       // 如果可控外部LR
 
-      console.log(ctrlOutSiteLR, targetIndex)
+      // console.log(ctrlOutSiteLR, targetIndex)
       if ($left + 5 > mouseLeft && $left < mouseLeft && ctrlOutSiteLR && targetIndex !== '0') { return ('l') }
       // if (mouseLeft > $right - 40 && mouseLeft < $right && ctrlOutSiteLR) { return ('r') }
 
@@ -178,11 +226,17 @@ $(function () {
       if (/[a-z]/g.test(operatingWay)) {
         level.pop()
       }
-      this.changeJsonTrees(newCj, level, this.climbingJsonTrees(newCj, level), operatingWay)
-       // 傳入被爬的對像與指定層級與操作方法給改變JsonTrees的方法
-       // 其中得到枝子的方法是通由爬樹方法找到的
+      // console.log(this.state.cJ)
+      // console.log(newCj)
 
-      // this.setState({cJ: newCj})
+      this.addJsonTrees(newCj, level, this.climbingJsonTrees(newCj, level), operatingWay)
+      // 傳入被爬的對像與指定層級與操作方法給改變JsonTrees的方法
+      // 其中得到枝子的方法是通由爬樹方法找到的
+
+      // 不知為何這邊的 newCj跟 this.state.cJ也是自動會被改變的?????????????
+      // (就算沒有下面的setState也會變，但是只是不會渲染)
+      this.setState({cJ: newCj})
+
       this.cancelDefault(e)
     }
 
@@ -277,6 +331,7 @@ $(function () {
 
     render () {
       // render operatingArea 時 會參照 State 內的資料
+      console.table(this.state)
       return (
         <React.Fragment>
           <div id='menu'>
