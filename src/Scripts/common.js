@@ -1,18 +1,16 @@
-﻿import React from 'react'
-import ReactDOM from 'react-dom'
-import $ from 'jquery'
+﻿/* import React from 'react'
+ * import ReactDOM from 'react-dom'
+ * import $ from 'jquery'
+*/
+// 因為 browserify打包模塊太慢了 開發不使用
 
 $(function () {
-  // console.log($)
-  // console.log(React)
-
   class MenuAndOperatingArea extends React.Component {
     constructor () {
       super()
       // contentJson 縮寫成 cJ
       this.state = {
-        // cJ: [{cJ: []}, {cJ: []}, {cJ: [[{cJ: []}], [{cJ: []}]]}]
-        cJ: [[{cJ: [{cJ: []}, {cJ: []}]}], [{cJ: [{cJ: []}, {cJ: []}]}]]
+        cJ: []
       }
 
       // 陣列 內如有陣列 必須與陣列並排 不然沒有意義
@@ -30,36 +28,38 @@ $(function () {
       }
     }
 
-    addJsonTrees (json, level, JsonBranch, way) { // 改變樹枝
+    addJsonTrees (json, level, JsonBranch, way) { // +樹枝
       // json 必須是完整的整棵樹
       // level 也必須是完整的層級資訊
       // JsonBranch 則是未被異動的枝子 (會先經由climbingJsonTrees 得到的末端Json枝子) 注意 它是傳址!直接改它可以指回到 State
       // Way是操縱的方法 (上下左右中)
 
-      console.log(JsonBranch) // 這裡先反應還沒加過的JS
-
+      // console.log(JsonBranch) // 這裡先反應還沒加過的JS
       var newJsonBranch = JsonBranch // 由於這樣是傳址 所以newJsonBranch也可以指回到 State
-
       var copyJsonBranch = JSON.parse(JSON.stringify(JsonBranch)) // Deep Copy，使傳址的Obj 能夠複製一個跟原本不關聯的變數
 
       var objectBlankDiv = {cJ: []} // 新增的東西兩種歡迎自由取用
       var arrayBlankDiv = [{cJ: []}] // 第二種
-      var JsonBranchAddtoArray = [copyJsonBranch.cj] // 這邊有把舊的Json小枝 用[]包起來
+
+      var nowIndex
+      var InSiteIsWhichObj
 
       var ObjIsObject = this.jsonIsWhichObj(JsonBranch)
       // 先得知 JsonBranch是{} 或是 []， 丟進去
       if (!ObjIsObject) {
         // 如果是[]
         console.log('編輯對象是[]，直接操作[]')
+        InSiteIsWhichObj = newJsonBranch.length ? this.jsonIsWhichObj(newJsonBranch[0]) : false
       } else if (ObjIsObject) {
         // 如果是{}
-        console.log('編輯對象是{}，操作{}裡面的cJ特性~')
+        // console.log('編輯對象是{}，操作{}裡面的cJ特性~')
+        InSiteIsWhichObj = newJsonBranch.cJ.length ? this.jsonIsWhichObj(newJsonBranch.cJ[0]) : false
 
         if (way === 'C') { // 內側中間
           newJsonBranch.cJ.push(objectBlankDiv)
         }
         if (way === 'L') { // 內側左邊
-          if (this.jsonIsWhichObj(newJsonBranch.cJ[0])) {
+          if (InSiteIsWhichObj) {
             // newJsonBranch.cJ 內容物是{}
             newJsonBranch.cJ.unshift(objectBlankDiv)
           } else {
@@ -70,19 +70,21 @@ $(function () {
         }
 
         if (way === 'R') { // 內側右邊
-          if (this.jsonIsWhichObj(newJsonBranch.cJ[0])) {
+          if (InSiteIsWhichObj) {
             // newJsonBranch.cJ 內容物是{}
             newJsonBranch.cJ.push(objectBlankDiv)
           } else {
             // newJsonBranch.cJ 內容物是[]
             newJsonBranch.cJ.splice(0, newJsonBranch.cJ.length)
-            newJsonBranch.cJ.push(copyJsonBranch, objectBlankDiv)
+            newJsonBranch.cJ.push(copyJsonBranch, objectBlankDiv) // OK
           }
         }
 
         if (way === 'T') { // 內側上方
-          if (this.jsonIsWhichObj(newJsonBranch.cJ[0])) {
+          if (InSiteIsWhichObj) {
             // newJsonBranch.cJ 內容物是{}
+            newJsonBranch.cJ.splice(0, newJsonBranch.cJ.length)
+            newJsonBranch.cJ.push(arrayBlankDiv, copyJsonBranch.cJ) // OK
           } else {
             // newJsonBranch.cJ 內容物是[]
             newJsonBranch.cJ.unshift(arrayBlankDiv) // OK
@@ -90,17 +92,37 @@ $(function () {
         }
 
         if (way === 'B') { // 內側下方
-          if (this.jsonIsWhichObj(newJsonBranch.cJ[0])) {
+          if (InSiteIsWhichObj) {
             // newJsonBranch.cJ 內容物是{}
-
+            newJsonBranch.cJ.splice(0, newJsonBranch.cJ.length)
+            newJsonBranch.cJ.push(copyJsonBranch.cJ, arrayBlankDiv) // OK
           } else {
             // newJsonBranch.cJ 內容物是[]
             newJsonBranch.cJ.push(arrayBlankDiv) // OK
           }
         }
+
+        if (way === 'l') { // 外側左邊
+          nowIndex = level[level.length - 1]
+          if (InSiteIsWhichObj) {
+            // newJsonBranch.cJ 內容物是{}
+            newJsonBranch.cJ.splice(nowIndex, 0, objectBlankDiv)
+          } else {
+            // newJsonBranch.cJ 內容物是[]
+          }
+        }
+
+        if (way === 't') { // 外側上方
+          nowIndex = level[level.length - 1]
+          if (this.jsonIsWhichObj(newJsonBranch.cJ[0])) {
+            newJsonBranch.cJ.splice(nowIndex, 0, objectBlankDiv)
+          } else {
+            newJsonBranch.cJ.splice(nowIndex, 0, arrayBlankDiv)
+          }
+        }
       }
 
-      console.log(newJsonBranch) // 這裡會被反應加過的JS
+      // console.log(newJsonBranch) // 這裡會被反應加過的JS
     }
 
     climbingJsonTrees (json, level) { // 爬Json樹 回應枝子
@@ -217,23 +239,36 @@ $(function () {
     dropped (e) { // 被綁在要被放東西進來的框框(#operatingArea) onDrop時調用這個方法
       var $target = $(e.currentTarget)
       var $targetClass = $target.attr('class')
-      var operatingWay = $targetClass.substr($targetClass.length - 1)
+      var operatingWay = $targetClass.substr($targetClass.length - 1) // 得知操作方法
+      var isLowerCase = /[a-z]/g.test(operatingWay) // 得知方法是否小寫
+      var isRow = $target.attr('data-row') // 得知是否為 data-row
+      var level = $target.attr('id') === 'operatingArea' ? [] : $target.attr('id').split('-') // 得知ID帶的層級數字
+      var newCj = this.state.cJ
 
       $target.removeClass('Slect L R C T B l r b t X')
 
-      var newCj = this.state.cJ
-      var level = $target.attr('id').split('-')
-      if (/[a-z]/g.test(operatingWay)) {
-        level.pop()
-      }
       // console.log(this.state.cJ)
       // console.log(newCj)
+      var copylevel
+      copylevel = JSON.parse(JSON.stringify(level))
 
-      this.addJsonTrees(newCj, level, this.climbingJsonTrees(newCj, level), operatingWay)
+      if (isLowerCase) {
+        // 這裡是指level 往上爬一層，當控制 Class 為小寫表是控制外部，climbingJsonTrees方法要往上爬一層
+        copylevel.pop()
+        if (isRow) {
+          // 如果當操作的 Dom 是 data-row， climbingJsonTrees addJsonTrees的對像都要往上爬一層
+          level.pop()
+          copylevel.pop()
+        }
+      }
+
+      // console.log(level)
+      // console.log(copylevel)
+
+      this.addJsonTrees(newCj, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
       // 傳入被爬的對像與指定層級與操作方法給改變JsonTrees的方法
-      // 其中得到枝子的方法是通由爬樹方法找到的
+      // 其中得到枝子的方法是通由爬樹方法( climbingJsonTrees )找到的
 
-      // 不知為何這邊的 newCj跟 this.state.cJ也是自動會被改變的?????????????
       // (就算沒有下面的setState也會變，但是只是不會渲染)
       this.setState({cJ: newCj})
 
