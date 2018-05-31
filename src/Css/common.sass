@@ -44,7 +44,7 @@
       display: block
       color: #fff
       position: absolute
-      background: url('../img/plas.png') center no-repeat
+      background: url('../img/plas.png') center no-repeat rgba(255, 251, 211, 0.5)
       z-index: -1
   &.l, &.r, &.b, &.t
     &::after
@@ -52,7 +52,7 @@
       display: block
       color: #fff
       position: absolute
-      background: url('../img/plas_outsite.png') center no-repeat #fff
+      background: url('../img/plas_outsite.png') center no-repeat  rgba(255, 251, 211, 0.5)
       z-index: -1
   &.L,&.l
     padding-left: 40px !important
@@ -83,11 +83,11 @@
       width: 100%
       height: 40px
   &.C::after
-    left: 20px
-    top: 20px
-    background-color: #fffbd3
-    width: calc( 100% - 40px )
-    height: calc( 100% - 40px )
+    left: 0
+    top: 0
+    background-color: rgba(255, 251, 211, 0.5)
+    width: 100%
+    height: 100%
   &.l::after
     border-right: 1px solid #ccc
     border-left: 1px solid #ccc

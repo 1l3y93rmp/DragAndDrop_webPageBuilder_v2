@@ -28,8 +28,8 @@ $(function () {
       }
     }
 
-    addJsonTrees (json, level, JsonBranch, way) { // +樹枝
-      // json 必須是完整的整棵樹
+    addJsonTrees (plusObj, level, JsonBranch, way) { // +樹枝
+      // plusObj 就是要加入的東西是啥，有可能會傳來空 {cJ: []} 或是其他更複雜的物件
       // level 也必須是完整的層級資訊
       // JsonBranch 則是未被異動的枝子 (會先經由climbingJsonTrees 得到的末端Json枝子) 注意 它是傳址!直接改它可以指回到 State
       // Way是操縱的方法 (上下左右中)
@@ -38,8 +38,7 @@ $(function () {
       var newJsonBranch = JsonBranch // 由於這樣是傳址 所以newJsonBranch也可以指回到 State
       var copyJsonBranch = JSON.parse(JSON.stringify(JsonBranch)) // Deep Copy，使傳址的Obj 能夠複製一個跟原本不關聯的變數
 
-      var objectBlankDiv = {cJ: []} // 新增的東西兩種歡迎自由取用
-      var arrayBlankDiv = [{cJ: []}] // 第二種
+      var arrayBlankDiv = [plusObj] // 把要加的東西在+上包裹
 
       var nowIndex
       var InSiteIsWhichObj
@@ -56,27 +55,27 @@ $(function () {
         InSiteIsWhichObj = newJsonBranch.cJ.length ? this.jsonIsWhichObj(newJsonBranch.cJ[0]) : false
 
         if (way === 'C') { // 內側中間
-          newJsonBranch.cJ.push(objectBlankDiv)
+          newJsonBranch.cJ.push(plusObj)
         }
         if (way === 'L') { // 內側左邊
           if (InSiteIsWhichObj) {
             // newJsonBranch.cJ 內容物是{}
-            newJsonBranch.cJ.unshift(objectBlankDiv)
+            newJsonBranch.cJ.unshift(plusObj)
           } else {
             // newJsonBranch.cJ 內容物是[]
             newJsonBranch.cJ.splice(0, newJsonBranch.cJ.length)
-            newJsonBranch.cJ.push(objectBlankDiv, copyJsonBranch)
+            newJsonBranch.cJ.push(plusObj, copyJsonBranch)
           }
         }
 
         if (way === 'R') { // 內側右邊
           if (InSiteIsWhichObj) {
             // newJsonBranch.cJ 內容物是{}
-            newJsonBranch.cJ.push(objectBlankDiv)
+            newJsonBranch.cJ.push(plusObj)
           } else {
             // newJsonBranch.cJ 內容物是[]
             newJsonBranch.cJ.splice(0, newJsonBranch.cJ.length)
-            newJsonBranch.cJ.push(copyJsonBranch, objectBlankDiv) // OK
+            newJsonBranch.cJ.push(copyJsonBranch, plusObj) // OK
           }
         }
 
@@ -106,7 +105,7 @@ $(function () {
           nowIndex = level[level.length - 1]
           if (InSiteIsWhichObj) {
             // newJsonBranch.cJ 內容物是{}
-            newJsonBranch.cJ.splice(nowIndex, 0, objectBlankDiv)
+            newJsonBranch.cJ.splice(nowIndex, 0, plusObj)
           } else {
             // newJsonBranch.cJ 內容物是[]
           }
@@ -156,6 +155,7 @@ $(function () {
 
     ondragstart (e) { // 被綁在被拖的東西的 (#menu內的)
       e.dataTransfer.setData('text/plain', e.target.id)
+      // dataTransfer 可以把一些資料傳給 dropped (也就是被拖來放的那個物件上 onDrop 事件的方法) 這個方法
     }
 
     cancelDefault (e) { // 在防止預設行為的方法，被 dropped dragoverGoSlect 調用
@@ -211,7 +211,7 @@ $(function () {
       return 'X' // 沒Class的意思
     }
 
-    dragoverGoSlect (isWrap, ctrlOutSiteTB, ctrlOutSiteLR, e) { // 被拉到的時候 需要添加Class
+    dragoverGoSlect (isWrap, ctrlOutSiteTB, ctrlOutSiteLR, e) { // 被拖著旋停時 下面的物件 需要添加Class
       var $target = $(e.currentTarget)
       var nowClass = $target.attr('class')
       if (nowClass) {
@@ -236,19 +236,21 @@ $(function () {
       $(e.currentTarget).removeClass('Slect L R C T B l r b t X')
     }
 
-    dropped (e) { // 被綁在要被放東西進來的框框(#operatingArea) onDrop時調用這個方法
+    dropped (e) { // 被綁在可被拖來放的框框(#operatingArea) onDrop時調用這個方法
+      var beingDraggedID = e.dataTransfer.getData('text/plain')
+      console.log(beingDraggedID)
+
       var $target = $(e.currentTarget)
       var $targetClass = $target.attr('class')
       var operatingWay = $targetClass.substr($targetClass.length - 1) // 得知操作方法
       var isLowerCase = /[a-z]/g.test(operatingWay) // 得知方法是否小寫
       var isRow = $target.attr('data-row') // 得知是否為 data-row
-      var level = $target.attr('id') === 'operatingArea' ? [] : $target.attr('id').split('-') // 得知ID帶的層級數字
+      var beingDraggedIDlevel = beingDraggedID.split('-') // 得知 被拖的 ID帶的層級數字
+      var level = $target.attr('id') === 'operatingArea' ? [] : $target.attr('id').split('-') // 得知ID (被拖來放)帶的層級數字
       var newCj = this.state.cJ
 
       $target.removeClass('Slect L R C T B l r b t X')
 
-      // console.log(this.state.cJ)
-      // console.log(newCj)
       var copylevel
       copylevel = JSON.parse(JSON.stringify(level))
 
@@ -261,13 +263,19 @@ $(function () {
           copylevel.pop()
         }
       }
-
       // console.log(level)
       // console.log(copylevel)
 
-      this.addJsonTrees(newCj, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
-      // 傳入被爬的對像與指定層級與操作方法給改變JsonTrees的方法
-      // 其中得到枝子的方法是通由爬樹方法( climbingJsonTrees )找到的
+      if (beingDraggedID === 'emptyBox') { // 被拖的東西ID 如果是空Box
+        this.addJsonTrees({cJ: []}, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
+        // 傳入被爬的對像與指定層級與操作方法給改變JsonTrees的方法
+        // 其中得到枝子的方法是通由爬樹方法( climbingJsonTrees )找到的
+      }
+
+      if (/[-]/g.test(beingDraggedID)) { // 被拖的東西ID 是一個複雜的DIV 且用爬樹把她找出來
+        this.addJsonTrees(this.climbingJsonTrees(newCj, beingDraggedIDlevel), level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
+        // 這裡發生不可預期之事 (被複製過去竟然會連動)
+      }
 
       // (就算沒有下面的setState也會變，但是只是不會渲染)
       this.setState({cJ: newCj})
@@ -294,6 +302,8 @@ $(function () {
                 onDragEnter={this.cancelDefault}
                 onDragOver={this.dragoverGoSlect.bind(null, true, false, false)}
                 onDragLeave={this.dragleaveGoBack}
+                draggable='true'
+                onDragStart={this.ondragstart}
               >
                 {this.mapToCreatDiv(node.cJ, myKey)}
               </div>
@@ -308,6 +318,8 @@ $(function () {
                 onDragEnter={this.cancelDefault}
                 onDragOver={this.dragoverGoSlect.bind(null, false, false, false)}
                 onDragLeave={this.dragleaveGoBack}
+                draggable='true'
+                onDragStart={this.ondragstart}
               />
             )
           }
@@ -323,6 +335,8 @@ $(function () {
                 onDragEnter={this.cancelDefault}
                 onDragOver={this.dragoverGoSlect.bind(null, node[0].cJ.length, true, false)}
                 onDragLeave={this.dragleaveGoBack}
+                draggable='true'
+                onDragStart={this.ondragstart}
               >
                 {this.mapToCreatDiv(node[0].cJ, myKey + '-0')}
               </div>
@@ -341,6 +355,8 @@ $(function () {
                   onDragEnter={this.cancelDefault}
                   onDragOver={this.dragoverGoSlect.bind(null, node_.cJ.length, false, true)}
                   onDragLeave={this.dragleaveGoBack}
+                  draggable='true'
+                  onDragStart={this.ondragstart}
                   >
                   {this.mapToCreatDiv(node_.cJ, sideBySideKey)}
                 </div>
@@ -355,6 +371,8 @@ $(function () {
                 onDragEnter={this.cancelDefault}
                 onDragOver={this.dragoverGoSlect.bind(null, true, true, false)}
                 onDragLeave={this.dragleaveGoBack}
+                draggable='true'
+                onDragStart={this.ondragstart}
                 >
                 {sideBySideDom}
               </div>
@@ -366,11 +384,13 @@ $(function () {
 
     render () {
       // render operatingArea 時 會參照 State 內的資料
-      console.table(this.state)
+      // console.table(this.state)
       return (
         <React.Fragment>
           <div id='menu'>
-            <div draggable='true'
+            <div
+              id='emptyBox'
+              draggable='true'
               onDragStart={this.ondragstart}
             > 添加一個框框 </div>
           </div>
