@@ -13,11 +13,15 @@ $(function () {
         cJ: []
       }
 
+      this.altCopymode = false
+
       // 陣列 內如有陣列 必須與陣列並排 不然沒有意義
       this.dropped = this.dropped.bind(this)
       this.dragoverGoSlect = this.dragoverGoSlect.bind(this)
       this.climbingJsonTrees = this.climbingJsonTrees.bind(this)
+      this.ondragstart = this.ondragstart.bind(this)
       this.addJsonTrees = this.addJsonTrees.bind(this)
+      this.deleteJsonTrees = this.deleteJsonTrees.bind(this)
     }
 
     jsonIsWhichObj (obj) { // 用來判斷JSON最外層是什麼樣的Obj 如果是{} 回應True []回應False
@@ -36,9 +40,10 @@ $(function () {
 
       // console.log(JsonBranch) // 這裡先反應還沒加過的JS
       var newJsonBranch = JsonBranch // 由於這樣是傳址 所以newJsonBranch也可以指回到 State
-      var copyJsonBranch = JSON.parse(JSON.stringify(JsonBranch)) // Deep Copy，使傳址的Obj 能夠複製一個跟原本不關聯的變數
+      var copyJsonBranch = JSON.parse(JSON.stringify(JsonBranch))
+      // Deep Copy，使傳址的Obj 能夠複製一個跟原本不關聯的變數
 
-      var arrayBlankDiv = [plusObj] // 把要加的東西在+上包裹
+      var arrayPackagePlusObj = [plusObj] // 把要加的東西在+上包裹
 
       var nowIndex
       var InSiteIsWhichObj
@@ -83,10 +88,10 @@ $(function () {
           if (InSiteIsWhichObj) {
             // newJsonBranch.cJ 內容物是{}
             newJsonBranch.cJ.splice(0, newJsonBranch.cJ.length)
-            newJsonBranch.cJ.push(arrayBlankDiv, copyJsonBranch.cJ) // OK
+            newJsonBranch.cJ.push(arrayPackagePlusObj, copyJsonBranch.cJ) // OK
           } else {
             // newJsonBranch.cJ 內容物是[]
-            newJsonBranch.cJ.unshift(arrayBlankDiv) // OK
+            newJsonBranch.cJ.unshift(arrayPackagePlusObj) // OK
           }
         }
 
@@ -94,10 +99,10 @@ $(function () {
           if (InSiteIsWhichObj) {
             // newJsonBranch.cJ 內容物是{}
             newJsonBranch.cJ.splice(0, newJsonBranch.cJ.length)
-            newJsonBranch.cJ.push(copyJsonBranch.cJ, arrayBlankDiv) // OK
+            newJsonBranch.cJ.push(copyJsonBranch.cJ, arrayPackagePlusObj) // OK
           } else {
             // newJsonBranch.cJ 內容物是[]
-            newJsonBranch.cJ.push(arrayBlankDiv) // OK
+            newJsonBranch.cJ.push(arrayPackagePlusObj) // OK
           }
         }
 
@@ -114,9 +119,9 @@ $(function () {
         if (way === 't') { // 外側上方
           nowIndex = level[level.length - 1]
           if (this.jsonIsWhichObj(newJsonBranch.cJ[0])) {
-            newJsonBranch.cJ.splice(nowIndex, 0, objectBlankDiv)
+            newJsonBranch.cJ.splice(nowIndex, 0, plusObj)
           } else {
-            newJsonBranch.cJ.splice(nowIndex, 0, arrayBlankDiv)
+            newJsonBranch.cJ.splice(nowIndex, 0, arrayPackagePlusObj)
           }
         }
       }
@@ -124,10 +129,40 @@ $(function () {
       // console.log(newJsonBranch) // 這裡會被反應加過的JS
     }
 
-    climbingJsonTrees (json, level) { // 爬Json樹 回應枝子
-      // 當收到操作時，爬Json樹
+    deleteJsonTrees (e) { // 刪除樹枝
+      var $target = $(e.currentTarget)
+      console.log('刪除模式' + $target.attr('id'))
+      var level = $target.attr('id').split('-')
+      var isRow = $target.attr('data-row') // 得知這個要被刪的東西是否為 data-row
+      var index = level[level.length - 1]
+      level.pop()
+      var newCj = this.state.cJ
+
+      if (isRow) {
+        level.pop()
+      }
+
+      var deleteBranchUpper = this.climbingJsonTrees(newCj, level)
+      // 得到要被砍的枝子的上層
+      if (this.jsonIsWhichObj(deleteBranchUpper)) {
+        // 如果是Object
+        deleteBranchUpper.cJ.splice(index, 1)
+      } else {
+        // 如果是Array
+        deleteBranchUpper.splice(index, 1)
+      }
+
+      this.setState({cJ: newCj})
+      this.cancelDefault(e)
+    }
+
+    climbingJsonTrees (json, level) { // 用層級爬Json樹 回應枝子
+      // json 完整的樹
+      // level 層級(array型態)
+      // addCharacteristic 是如果有傳入字串 會再調用添加標記的方法(通常只有刪除的時候 會傳入刪除參數)
       if (!/\d/g.test(level[0])) return this.state
       // 如果是最外層 直接不要爬了 出去
+      // console.log(addCharacteristic)
 
       if (level.length === 0) return json// 已經爬完樹 出去
 
@@ -146,15 +181,15 @@ $(function () {
       var leftoverLevel = level
 
       if (leftoverLevel.length === 0) {
-        // 已經爬完樹 應該開始操作是否再生枝或是截枝
+        // 已經爬完樹  出去 下一步應該開始操作是否再生枝 (addJsonTrees) 或是截枝
         return leftoverJson
       } else {
-        return this.climbingJsonTrees(leftoverJson, leftoverLevel) // 繼續把沒爬完的枝爬完
+        return this.climbingJsonTrees(leftoverJson, leftoverLevel) // 繼續遞迴把沒爬完的枝爬完
       }
     }
 
     ondragstart (e) { // 被綁在被拖的東西的 (#menu內的)
-      e.dataTransfer.setData('text/plain', e.target.id)
+      e.dataTransfer.setData('text/plain', e.target.id, this.altCopymode)
       // dataTransfer 可以把一些資料傳給 dropped (也就是被拖來放的那個物件上 onDrop 事件的方法) 這個方法
     }
 
@@ -237,16 +272,18 @@ $(function () {
     }
 
     dropped (e) { // 被綁在可被拖來放的框框(#operatingArea) onDrop時調用這個方法
-      var beingDraggedID = e.dataTransfer.getData('text/plain')
-      console.log(beingDraggedID)
-
+      var beingDraggedID = e.dataTransfer.getData('text/plain') // 從 ondragstart 方法傳來的拖者ID (字串)
       var $target = $(e.currentTarget)
       var $targetClass = $target.attr('class')
-      var operatingWay = $targetClass.substr($targetClass.length - 1) // 得知操作方法
-      var isLowerCase = /[a-z]/g.test(operatingWay) // 得知方法是否小寫
-      var isRow = $target.attr('data-row') // 得知是否為 data-row
-      var beingDraggedIDlevel = beingDraggedID.split('-') // 得知 被拖的 ID帶的層級數字
-      var level = $target.attr('id') === 'operatingArea' ? [] : $target.attr('id').split('-') // 得知ID (被拖來放)帶的層級數字
+      var operatingWay = $targetClass.substr($targetClass.length - 1) // 得知操作方法 (字串)
+      var isLowerCase = /[a-z]/g.test(operatingWay) // 得知方法是否小寫 (布林)
+      var isRow = $target.attr('data-row') // 得知是否為 data-row (字串/ㄤㄉfine)
+      var beingDraggedIDlevel = beingDraggedID.split('-') // 得知 被拖的 ID帶的層級數字 (陣列)
+      var level = $target.attr('id') === 'operatingArea' ? [] : $target.attr('id').split('-') // 得知ID (被放的)帶的層級數字 (陣列)
+
+      console.log('被拖者的ID:' + beingDraggedID)
+      console.log('被放者的ID:' + $target.attr('id'))
+
       var newCj = this.state.cJ
 
       $target.removeClass('Slect L R C T B l r b t X')
@@ -267,20 +304,49 @@ $(function () {
       // console.log(copylevel)
 
       if (beingDraggedID === 'emptyBox') { // 被拖的東西ID 如果是空Box
+        console.log('添加模式')
         this.addJsonTrees({cJ: []}, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
         // 傳入被爬的對像與指定層級與操作方法給改變JsonTrees的方法
         // 其中得到枝子的方法是通由爬樹方法( climbingJsonTrees )找到的
       }
 
-      if (/[-]/g.test(beingDraggedID)) { // 被拖的東西ID 是一個複雜的DIV 且用爬樹把她找出來
-        this.addJsonTrees(this.climbingJsonTrees(newCj, beingDraggedIDlevel), level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
-        // 這裡發生不可預期之事 (被複製過去竟然會連動)
+      if (/[-]/g.test(beingDraggedID) || /\d{1}/g.test(beingDraggedID)) { // 被拖的東西ID 是一個複雜的DIV 且用爬樹把她找出來
+        var copyJsonBranch = JSON.parse(JSON.stringify(this.climbingJsonTrees(newCj, beingDraggedIDlevel)))
+          // 深層複製 打斷魂結 使不連動
+
+        if (this.altCopymode) { // 複製模式
+          console.log('複製模式')
+          this.addJsonTrees(copyJsonBranch, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
+          // 這邊出了一個問題 再複製的時候只能拉動可視的 data-row 但是其實這會讓它多複製一層
+        } else { // 如果不是複製模式，需要刪除舊的DOM
+          console.log('移動模式')
+          // this.addJsonTrees(copyJsonBranch, level, this.climbingJsonTrees(newCj, copylevel, 'delete'), operatingWay)
+          // 這邊多了一個參數，是要加入一個'delete'的特性在Json樹內做為標記，以免Json樹異動不知道要刪哪個
+          // 有時候不會成功傳入'delete'參數 ???????
+        }
       }
 
       // (就算沒有下面的setState也會變，但是只是不會渲染)
       this.setState({cJ: newCj})
 
       this.cancelDefault(e)
+    }
+
+    componentDidMount () {
+      document.addEventListener('keydown', (e) => {
+        if (e.keyCode === 18) {
+          this.altCopymode = true
+          // console.log('按下' + this.altCopymode)
+        }
+        e.preventDefault() // 為什麼要寫這個 我也不懂 沒寫的話keyup後要再點擊一次畫面這個事件才能再次有效
+      })
+
+      document.addEventListener('keyup', (e) => {
+        if (e.keyCode === 18) {
+          this.altCopymode = false
+          // console.log('放開' + this.altCopymode)
+        }
+      })
     }
 
     mapToCreatDiv (cJdata, previousKey) {
@@ -304,6 +370,7 @@ $(function () {
                 onDragLeave={this.dragleaveGoBack}
                 draggable='true'
                 onDragStart={this.ondragstart}
+                onClick={this.deleteJsonTrees}
               >
                 {this.mapToCreatDiv(node.cJ, myKey)}
               </div>
@@ -320,6 +387,7 @@ $(function () {
                 onDragLeave={this.dragleaveGoBack}
                 draggable='true'
                 onDragStart={this.ondragstart}
+                onClick={this.deleteJsonTrees}
               />
             )
           }
@@ -337,6 +405,7 @@ $(function () {
                 onDragLeave={this.dragleaveGoBack}
                 draggable='true'
                 onDragStart={this.ondragstart}
+                onClick={this.deleteJsonTrees}
               >
                 {this.mapToCreatDiv(node[0].cJ, myKey + '-0')}
               </div>
@@ -357,6 +426,7 @@ $(function () {
                   onDragLeave={this.dragleaveGoBack}
                   draggable='true'
                   onDragStart={this.ondragstart}
+                  onClick={this.deleteJsonTrees}
                   >
                   {this.mapToCreatDiv(node_.cJ, sideBySideKey)}
                 </div>
@@ -373,6 +443,7 @@ $(function () {
                 onDragLeave={this.dragleaveGoBack}
                 draggable='true'
                 onDragStart={this.ondragstart}
+                onClick={this.deleteJsonTrees}
                 >
                 {sideBySideDom}
               </div>
@@ -384,7 +455,7 @@ $(function () {
 
     render () {
       // render operatingArea 時 會參照 State 內的資料
-      // console.table(this.state)
+      console.table(this.state)
       return (
         <React.Fragment>
           <div id='menu'>
