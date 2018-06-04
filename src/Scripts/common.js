@@ -188,9 +188,16 @@ $(function () {
       }
     }
 
+    findJsonTree (json, keyWord) { // 用特殊屬性爬Json樹 直接操作它
+      return []
+    }
+
     ondragstart (e) { // 被綁在被拖的東西的 (#menu內的)
       e.dataTransfer.setData('text/plain', e.target.id, this.altCopymode)
       // dataTransfer 可以把一些資料傳給 dropped (也就是被拖來放的那個物件上 onDrop 事件的方法) 這個方法
+      if (!this.altCopymode && /[-]/g.test(e.target.id)) { // 移動模式
+        this.climbingJsonTrees(this.state.cJ, e.target.id.split('-')).delete = true
+      }
     }
 
     cancelDefault (e) { // 在防止預設行為的方法，被 dropped dragoverGoSlect 調用
@@ -320,9 +327,10 @@ $(function () {
           // 這邊出了一個問題 再複製的時候只能拉動可視的 data-row 但是其實這會讓它多複製一層
         } else { // 如果不是複製模式，需要刪除舊的DOM
           console.log('移動模式')
-          // this.addJsonTrees(copyJsonBranch, level, this.climbingJsonTrees(newCj, copylevel, 'delete'), operatingWay)
-          // 這邊多了一個參數，是要加入一個'delete'的特性在Json樹內做為標記，以免Json樹異動不知道要刪哪個
-          // 有時候不會成功傳入'delete'參數 ???????
+          delete copyJsonBranch.delete // 複製出來新的不需要有delete屬性
+          this.addJsonTrees(copyJsonBranch, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
+
+          newCj = this.findJsonTree(newCj, 'delete')
         }
       }
 
