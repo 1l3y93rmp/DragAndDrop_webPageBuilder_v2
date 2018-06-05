@@ -15,13 +15,13 @@ $(function () {
 
       this.altCopymode = false
 
-      // 陣列 內如有陣列 必須與陣列並排 不然沒有意義
       this.dropped = this.dropped.bind(this)
       this.dragoverGoSlect = this.dragoverGoSlect.bind(this)
       this.climbingJsonTrees = this.climbingJsonTrees.bind(this)
       this.ondragstart = this.ondragstart.bind(this)
       this.addJsonTrees = this.addJsonTrees.bind(this)
       this.deleteJsonTrees = this.deleteJsonTrees.bind(this)
+      this.findJsonTree = this.findJsonTree.bind(this)
     }
 
     jsonIsWhichObj (obj) { // 用來判斷JSON最外層是什麼樣的Obj 如果是{} 回應True []回應False
@@ -188,14 +188,48 @@ $(function () {
       }
     }
 
-    findJsonTree (json, keyWord) { // 用特殊屬性爬Json樹 直接操作它
-      return []
+    findJsonTree (json, keyWord) { // 用特殊屬性爬Json樹
+      // 要先知道傳進來的這棵樹是{} 還是 [] 才知道要怎麼爬
+
+      var jsonString
+      var ObjIsObject = this.jsonIsWhichObj(json)
+      if (ObjIsObject) {
+        // {}
+        if (json.hasOwnProperty(keyWord)) {
+          return true
+        } else {
+          // 要往更深層去找
+          return this.findJsonTree(json.cJ, keyWord)
+        }
+      } else {
+        // []
+        for (var i = 0; i < json.length; i++) {
+          jsonString = JSON.stringify(json[i])
+          console.log(jsonString)
+          var regex = new RegExp('"' + keyWord + '":true', 'g')
+          if (regex.test(jsonString.substr(jsonString.length - 15))) {
+            json.splice(i, 1)
+            break
+          } else {
+            // 有可能是真的沒有 也有可能是在更深層
+            if (regex.test(jsonString)) {
+              // 在深層 要繼續往下
+              if (this.findJsonTree(json[i], keyWord)) {
+                // 如果回應了True，表示他是 {} 刪不掉自己，得要靠這裡刪
+                json.splice(i, 1)
+              }
+            }
+          }
+        }
+      }
     }
 
     ondragstart (e) { // 被綁在被拖的東西的 (#menu內的)
       e.dataTransfer.setData('text/plain', e.target.id, this.altCopymode)
       // dataTransfer 可以把一些資料傳給 dropped (也就是被拖來放的那個物件上 onDrop 事件的方法) 這個方法
-      if (!this.altCopymode && /[-]/g.test(e.target.id)) { // 移動模式
+
+      if (!this.altCopymode && /[-]|\d{1}$/g.test(e.target.id)) { // 移動模式
+        console.log(this.climbingJsonTrees(this.state.cJ, e.target.id.split('-')))
         this.climbingJsonTrees(this.state.cJ, e.target.id.split('-')).delete = true
       }
     }
@@ -330,7 +364,7 @@ $(function () {
           delete copyJsonBranch.delete // 複製出來新的不需要有delete屬性
           this.addJsonTrees(copyJsonBranch, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
 
-          newCj = this.findJsonTree(newCj, 'delete')
+          this.findJsonTree(newCj, 'delete')
         }
       }
 
