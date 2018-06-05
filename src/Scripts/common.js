@@ -1,6 +1,7 @@
 ﻿/* import React from 'react'
  * import ReactDOM from 'react-dom'
  * import $ from 'jquery'
+ * import Cookies from 'js-cookie'
 */
 // 因為 browserify打包模塊太慢了 開發不使用
 
@@ -14,6 +15,7 @@ $(function () {
       }
 
       this.altCopymode = false
+      this.UndoIndex = 0 // 回覆的次數
 
       this.dropped = this.dropped.bind(this)
       this.dragoverGoSlect = this.dragoverGoSlect.bind(this)
@@ -22,6 +24,8 @@ $(function () {
       this.addJsonTrees = this.addJsonTrees.bind(this)
       this.deleteJsonTrees = this.deleteJsonTrees.bind(this)
       this.findJsonTree = this.findJsonTree.bind(this)
+      this.saveStateinCookies = this.saveStateinCookies.bind(this)
+      this.recoveryState = this.recoveryState.bind(this)
     }
 
     jsonIsWhichObj (obj) { // 用來判斷JSON最外層是什麼樣的Obj 如果是{} 回應True []回應False
@@ -29,6 +33,55 @@ $(function () {
         return true
       } else if (obj.constructor === Array) {
         return false
+      }
+    }
+
+    saveStateinCookies () { // 儲存State在Cookie (在動作操做完之後) 使復原指令可以使用
+      if (Cookies.get('Undo') === undefined) {
+        // 從來沒存過Cookies的情形
+        Cookies.set('Undo', JSON.stringify([[]]))
+      }
+      var oldUndoCookies = JSON.parse(Cookies.get('Undo'))
+      if (this.UndoIndex === 0) {
+        // 這表示 是沒有用過任何復原重做的情形，可以安心添加Cookies
+        if (oldUndoCookies.length > 20) {
+          oldUndoCookies.pop()
+        }
+        oldUndoCookies.unshift(this.state.cJ) // 就用unshift塞進去 (較新 在前面)
+      } else {
+        // 這表示剛才有使用過復原 或重做
+        oldUndoCookies.splice(0, this.UndoIndex) // 於是把前面的丟掉
+        oldUndoCookies.unshift(this.state.cJ)
+        this.UndoIndex = 0
+      }
+      Cookies.set('Undo', JSON.stringify(oldUndoCookies))
+    }
+
+    recoveryState (brin) {
+      var nowUndoCookies = JSON.parse(Cookies.get('Undo'))
+      if (nowUndoCookies.length) {
+        if (brin) {
+          // console.log('重做')
+          // 表示重做
+          if (this.UndoIndex !== 0) {
+            this.UndoIndex = this.UndoIndex - 1
+          }
+
+          this.setState({
+            cJ: JSON.parse(Cookies.get('Undo'))[this.UndoIndex]
+          })
+        } else {
+          // 表示復原
+          // console.log('復原')
+          if (nowUndoCookies.length > this.UndoIndex + 1) {
+            this.UndoIndex = this.UndoIndex + 1
+          }
+          this.setState({
+            cJ: JSON.parse(Cookies.get('Undo'))[this.UndoIndex]
+          })
+        }
+      } else {
+        console.log('沒有任何操作，無法復原或重做')
       }
     }
 
@@ -153,6 +206,7 @@ $(function () {
       }
 
       this.setState({cJ: newCj})
+      this.saveStateinCookies() // 改完了 存個檔
       this.cancelDefault(e)
     }
 
@@ -312,7 +366,7 @@ $(function () {
       $(e.currentTarget).removeClass('Slect L R C T B l r b t X')
     }
 
-    dropped (e) { // 被綁在可被拖來放的框框(#operatingArea) onDrop時調用這個方法
+    dropped (e) { // 被綁在可被拖來放的框框 onDrop時調用這個方法
       var beingDraggedID = e.dataTransfer.getData('text/plain') // 從 ondragstart 方法傳來的拖者ID (字串)
       var $target = $(e.currentTarget)
       var $targetClass = $target.attr('class')
@@ -370,16 +424,26 @@ $(function () {
 
       // (就算沒有下面的setState也會變，但是只是不會渲染)
       this.setState({cJ: newCj})
-
+      this.saveStateinCookies() // 改完了 存個檔
       this.cancelDefault(e)
     }
 
     componentDidMount () {
+      Cookies.set('Undo', [[]])
       document.addEventListener('keydown', (e) => {
         if (e.keyCode === 18) {
           this.altCopymode = true
           // console.log('按下' + this.altCopymode)
         }
+
+        if (e.keyCode === 90 && e.ctrlKey) {
+          this.recoveryState(false)
+        }
+
+        if (e.keyCode === 89 && e.ctrlKey) {
+          this.recoveryState(true)
+        }
+
         e.preventDefault() // 為什麼要寫這個 我也不懂 沒寫的話keyup後要再點擊一次畫面這個事件才能再次有效
       })
 
