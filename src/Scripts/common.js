@@ -2,7 +2,9 @@
  * import ReactDOM from 'react-dom'
  * import $ from 'jquery'
 */
-// 因為 browserify打包模塊太慢了 開發不使用
+// 因為 browserify打包外部模塊太慢了 開發不使用
+
+import DeleteSetBox from './panel_deleteSetBox'
 
 $(function () {
   class MenuAndOperatingArea extends React.Component {
@@ -37,15 +39,15 @@ $(function () {
 
     saveStateinLocalStorage () { // 儲存State在Cookie (在動作操做完之後) 使復原指令可以使用
       var undoRecords = window.localStorage.getItem('Undo')
-      if (undoRecords === undefined) {
+      if (undoRecords === null) {
         // 從來沒存過LocalStorage的情形
-        window.localStorage.setItem('Undo', JSON.stringify([[]]))
+        window.localStorage.setItem('Undo', JSON.stringify([this.state.cJ]))
       }
       var oldUndoLocalStorage = JSON.parse(undoRecords)
       if (this.UndoIndex === 0) {
         // 這表示 是沒有用過任何復原重做的情形，可以安心添加LocalStorage
         if (oldUndoLocalStorage.length > 20) {
-          oldUndoLocalStorage.pop()
+          oldUndoLocalStorage.pop() // 紀錄超過20次 就從屁股刪掉一筆
         }
         oldUndoLocalStorage.unshift(this.state.cJ) // 就用unshift塞進去 (較新 在前面)
       } else {
@@ -184,7 +186,7 @@ $(function () {
     }
 
     deleteJsonTrees (e) { // 刪除樹枝
-      var $target = $(e.currentTarget)
+      var $target = $(e.currentTarget).parent().parent() // 醜
       console.log('刪除模式' + $target.attr('id'))
       var level = $target.attr('id').split('-')
       var isRow = $target.attr('data-row') // 得知這個要被刪的東西是否為 data-row
@@ -454,6 +456,13 @@ $(function () {
           // console.log('放開' + this.altCopymode)
         }
       })
+
+      $('#operatingArea div').hover(function () {
+        $(this).find('.deleteSetBox').slideDown()
+      }, function () {
+        $(this).find('.deleteSetBox').slideUp()
+      })
+      // 注意冒泡 以及綁定時間...
     }
 
     mapToCreatDiv (cJdata, previousKey) {
@@ -477,9 +486,9 @@ $(function () {
                 onDragLeave={this.dragleaveGoBack}
                 draggable='true'
                 onDragStart={this.ondragstart}
-                onClick={this.deleteJsonTrees}
               >
                 {this.mapToCreatDiv(node.cJ, myKey)}
+                <DeleteSetBox deleteJsonTrees={this.deleteJsonTrees} />
               </div>
             )
           } else {
@@ -494,8 +503,10 @@ $(function () {
                 onDragLeave={this.dragleaveGoBack}
                 draggable='true'
                 onDragStart={this.ondragstart}
-                onClick={this.deleteJsonTrees}
-              />
+
+              >
+                <DeleteSetBox deleteJsonTrees={this.deleteJsonTrees} />
+              </div>
             )
           }
         } else if (!ObjIsObject) {
@@ -512,9 +523,9 @@ $(function () {
                 onDragLeave={this.dragleaveGoBack}
                 draggable='true'
                 onDragStart={this.ondragstart}
-                onClick={this.deleteJsonTrees}
               >
                 {this.mapToCreatDiv(node[0].cJ, myKey + '-0')}
+                <DeleteSetBox deleteJsonTrees={this.deleteJsonTrees} />
               </div>
             )
           } else {
@@ -533,9 +544,9 @@ $(function () {
                   onDragLeave={this.dragleaveGoBack}
                   draggable='true'
                   onDragStart={this.ondragstart}
-                  onClick={this.deleteJsonTrees}
                   >
                   {this.mapToCreatDiv(node_.cJ, sideBySideKey)}
+                  <DeleteSetBox deleteJsonTrees={this.deleteJsonTrees} />
                 </div>
               )
             })
@@ -550,9 +561,9 @@ $(function () {
                 onDragLeave={this.dragleaveGoBack}
                 draggable='true'
                 onDragStart={this.ondragstart}
-                onClick={this.deleteJsonTrees}
                 >
                 {sideBySideDom}
+                <DeleteSetBox deleteJsonTrees={this.deleteJsonTrees} />
               </div>
             )
           }
