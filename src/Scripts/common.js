@@ -1,7 +1,6 @@
 ﻿/* import React from 'react'
  * import ReactDOM from 'react-dom'
  * import $ from 'jquery'
- * import Cookies from 'js-cookie'
 */
 // 因為 browserify打包模塊太慢了 開發不使用
 
@@ -24,7 +23,7 @@ $(function () {
       this.addJsonTrees = this.addJsonTrees.bind(this)
       this.deleteJsonTrees = this.deleteJsonTrees.bind(this)
       this.findJsonTree = this.findJsonTree.bind(this)
-      this.saveStateinCookies = this.saveStateinCookies.bind(this)
+      this.saveStateinLocalStorage = this.saveStateinLocalStorage.bind(this)
       this.recoveryState = this.recoveryState.bind(this)
     }
 
@@ -36,30 +35,32 @@ $(function () {
       }
     }
 
-    saveStateinCookies () { // 儲存State在Cookie (在動作操做完之後) 使復原指令可以使用
-      if (Cookies.get('Undo') === undefined) {
-        // 從來沒存過Cookies的情形
-        Cookies.set('Undo', JSON.stringify([[]]))
+    saveStateinLocalStorage () { // 儲存State在Cookie (在動作操做完之後) 使復原指令可以使用
+      var undoRecords = window.localStorage.getItem('Undo')
+      if (undoRecords === undefined) {
+        // 從來沒存過LocalStorage的情形
+        window.localStorage.setItem('Undo', JSON.stringify([[]]))
       }
-      var oldUndoCookies = JSON.parse(Cookies.get('Undo'))
+      var oldUndoLocalStorage = JSON.parse(undoRecords)
       if (this.UndoIndex === 0) {
-        // 這表示 是沒有用過任何復原重做的情形，可以安心添加Cookies
-        if (oldUndoCookies.length > 20) {
-          oldUndoCookies.pop()
+        // 這表示 是沒有用過任何復原重做的情形，可以安心添加LocalStorage
+        if (oldUndoLocalStorage.length > 20) {
+          oldUndoLocalStorage.pop()
         }
-        oldUndoCookies.unshift(this.state.cJ) // 就用unshift塞進去 (較新 在前面)
+        oldUndoLocalStorage.unshift(this.state.cJ) // 就用unshift塞進去 (較新 在前面)
       } else {
-        // 這表示剛才有使用過復原 或重做
-        oldUndoCookies.splice(0, this.UndoIndex) // 於是把前面的丟掉
-        oldUndoCookies.unshift(this.state.cJ)
+        // 這表示剛才有使用過復原 然後又開始了新的操作
+        oldUndoLocalStorage.splice(0, this.UndoIndex) // 於是把前面的紀錄丟掉，再加上
+        oldUndoLocalStorage.unshift(this.state.cJ)
         this.UndoIndex = 0
       }
-      Cookies.set('Undo', JSON.stringify(oldUndoCookies))
+      window.localStorage.setItem('Undo', JSON.stringify(oldUndoLocalStorage))
     }
 
     recoveryState (brin) {
-      var nowUndoCookies = JSON.parse(Cookies.get('Undo'))
-      if (nowUndoCookies.length) {
+      var undoRecords = window.localStorage.getItem('Undo')
+      var nowUndoLocalStorage = JSON.parse(undoRecords)
+      if (nowUndoLocalStorage.length) {
         if (brin) {
           // console.log('重做')
           // 表示重做
@@ -68,16 +69,16 @@ $(function () {
           }
 
           this.setState({
-            cJ: JSON.parse(Cookies.get('Undo'))[this.UndoIndex]
+            cJ: JSON.parse(undoRecords)[this.UndoIndex]
           })
         } else {
           // 表示復原
           // console.log('復原')
-          if (nowUndoCookies.length > this.UndoIndex + 1) {
+          if (nowUndoLocalStorage.length > this.UndoIndex + 1) {
             this.UndoIndex = this.UndoIndex + 1
           }
           this.setState({
-            cJ: JSON.parse(Cookies.get('Undo'))[this.UndoIndex]
+            cJ: JSON.parse(undoRecords)[this.UndoIndex]
           })
         }
       } else {
@@ -206,7 +207,7 @@ $(function () {
       }
 
       this.setState({cJ: newCj})
-      this.saveStateinCookies() // 改完了 存個檔
+      this.saveStateinLocalStorage() // 改完了 存個檔
       this.cancelDefault(e)
     }
 
@@ -262,7 +263,7 @@ $(function () {
           console.log(jsonString)
           var regex = new RegExp('"' + keyWord + '":true', 'g')
           if (regex.test(jsonString.substr(jsonString.length - 15))) {
-            json.splice(i, 1)
+            json.splice(i, 1) // 暫時都只有寫刪除的動作
             break
           } else {
             // 有可能是真的沒有 也有可能是在更深層
@@ -270,7 +271,7 @@ $(function () {
               // 在深層 要繼續往下
               if (this.findJsonTree(json[i], keyWord)) {
                 // 如果回應了True，表示他是 {} 刪不掉自己，得要靠這裡刪
-                json.splice(i, 1)
+                json.splice(i, 1) // 暫時都只有寫刪除的動作
               }
             }
           }
@@ -424,12 +425,12 @@ $(function () {
 
       // (就算沒有下面的setState也會變，但是只是不會渲染)
       this.setState({cJ: newCj})
-      this.saveStateinCookies() // 改完了 存個檔
+      this.saveStateinLocalStorage() // 改完了 存個檔
       this.cancelDefault(e)
     }
 
     componentDidMount () {
-      Cookies.set('Undo', [[]])
+      window.localStorage.setItem('Undo', JSON.stringify([[]]))
       document.addEventListener('keydown', (e) => {
         if (e.keyCode === 18) {
           this.altCopymode = true
