@@ -81,7 +81,7 @@ $(function () {
           })
         }
       } else {
-        console.log('沒有任何操作，無法復原或重做')
+        console.log('沒有儲存任何操作，無法復原或重做')
       }
     }
 

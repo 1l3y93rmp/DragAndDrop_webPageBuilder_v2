@@ -21,13 +21,7 @@ var requireDir = require('require-dir') // 此套件會協助去找任務JS
 /*
 gulp.task('JSuglify', function () { // 命名一個叫做"JSuglify"的任務
   gulp.src(global.src'/Scripts/**.js').pipe(uglify()).pipe(gulp.dest('./webroot/Scripts')) // 把./src/ 內的JS通過 uglify() 的處裡 丟到./webroot
-})
-
-gulp.task('copyHtml',function(){
-  gulp.src(global.src'/*.html').pipe(gulp.dest('./webroot'));
-  browserSync.reload()
-})
-*/
+}) */
 
 var env = process.env.NODE_ENV.trim() // 這是參數 由set NODE_ENV=在CDN內設定的
 var config = require('./gulpconfig') // 這個檔案儲存了很多路徑
@@ -58,10 +52,15 @@ gulp.task('clean:webroot', function () {
   ])
 })
 
+gulp.task('copyImgFolder', function () {
+  return gulp.src(src + '/img/*', {base: src + '/img'})
+    .pipe(gulp.dest(webroot + '/img'))
+})
+
 gulp.task('browserSync', function () {
   browserSync({
     server: {
-      baseDir: [global.webroot]
+      baseDir: [webroot]
     },
     port: '1024'
   }, function (err, bs) {
@@ -81,7 +80,7 @@ gulp.task('watchToStratTask', function () {
   // gulp.watch([webroot + '/**'], ['browserReload'])
 })
 
-gulp.task('default', ['htmlPug', 'cssSass', 'browserify'], function () {
+gulp.task('default', ['copyImgFolder', 'htmlPug', 'cssSass', 'browserify'], function () {
   if (isWatching) {
     gulp.start(['browserSync', 'watchToStratTask']) // 預設任務 打開偵聽與瀏覽器同步
   } else {
