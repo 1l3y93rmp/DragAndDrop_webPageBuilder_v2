@@ -35,6 +35,7 @@ $(function () {
       } else if (obj.constructor === Array) {
         return false
       }
+      return 'else' // 如果是字串...數字 什麼的 回應字串的'else'
     }
 
     saveStateinLocalStorage () { // 儲存State在Cookie (在動作操做完之後) 使復原指令可以使用
@@ -402,10 +403,15 @@ $(function () {
       // console.log(copylevel)
 
       if (beingDraggedID === 'emptyBox') { // 被拖的東西ID 如果是空Box
-        console.log('添加模式')
+        console.log('添加模式(空盒)')
         this.addJsonTrees({cJ: []}, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
         // 傳入被爬的對像與指定層級與操作方法給改變JsonTrees的方法
         // 其中得到枝子的方法是通由爬樹方法( climbingJsonTrees )找到的
+      }
+
+      if (beingDraggedID === 'imgTag') { // 被拖動的東西ID是 圖片
+        console.log('添加模式(圖片)')
+        this.addJsonTrees({cJ: 'Img', url: 'img/k.jpg', alt: ''}, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
       }
 
       if (/[-]/g.test(beingDraggedID) || /\d{1}/g.test(beingDraggedID)) { // 被拖的東西ID 是一個複雜的DIV 且用爬樹把她找出來
@@ -460,47 +466,53 @@ $(function () {
 
     mapToCreatDiv (cJdata, previousKey) {
       return cJdata.map((node, index) => {
+        console.log(node)
         var myKey = previousKey === undefined ? index : previousKey + '-' + index
         // 注意 : myKey 並不紀錄DOM巢狀，而是紀錄JSON資料的巢狀
         var ObjIsObject = this.jsonIsWhichObj(node)
         if (ObjIsObject) {
           // 代表 node 是 {}
           let divStyle = {'width': 100 / cJdata.length + '%'}
-          if (node.cJ.length) {
-            // 如果node的cJ 裡面還是有東西(而且node是{}) 靠遞迴自己叫自己
-            return (
-              <div
-                id={myKey}
-                key={index}
-                style={divStyle}
-                onDrop={this.dropped}
-                onDragEnter={this.cancelDefault}
-                onDragOver={this.dragoverGoSlect.bind(null, true, false, false)}
-                onDragLeave={this.dragleaveGoBack}
-                draggable='true'
-                onDragStart={this.ondragstart}
-              >
-                {this.mapToCreatDiv(node.cJ, myKey)}
-                <DeleteSetBox deleteJsonTrees={this.deleteJsonTrees} />
-              </div>
-            )
-          } else {
-            return (
-              <div
-                id={myKey}
-                key={index}
-                style={divStyle}
-                onDrop={this.dropped}
-                onDragEnter={this.cancelDefault}
-                onDragOver={this.dragoverGoSlect.bind(null, false, false, false)}
-                onDragLeave={this.dragleaveGoBack}
-                draggable='true'
-                onDragStart={this.ondragstart}
+          if (typeof (this.jsonIsWhichObj(node.cJ)) === 'boolean') {
+            if (node.cJ.length) {
+              // 如果node的cJ 裡面還是有東西(而且node是{}) 靠遞迴自己叫自己
 
-              >
-                <DeleteSetBox deleteJsonTrees={this.deleteJsonTrees} />
-              </div>
-            )
+              return (
+                <div
+                  id={myKey}
+                  key={index}
+                  style={divStyle}
+                  onDrop={this.dropped}
+                  onDragEnter={this.cancelDefault}
+                  onDragOver={this.dragoverGoSlect.bind(null, true, false, false)}
+                  onDragLeave={this.dragleaveGoBack}
+                  draggable='true'
+                  onDragStart={this.ondragstart}
+                >
+                  {this.mapToCreatDiv(node.cJ, myKey)}
+                  <DeleteSetBox deleteJsonTrees={this.deleteJsonTrees} />
+                </div>
+              )
+            } else {
+              return (
+                <div
+                  id={myKey}
+                  key={index}
+                  style={divStyle}
+                  onDrop={this.dropped}
+                  onDragEnter={this.cancelDefault}
+                  onDragOver={this.dragoverGoSlect.bind(null, false, false, false)}
+                  onDragLeave={this.dragleaveGoBack}
+                  draggable='true'
+                  onDragStart={this.ondragstart}
+                >
+                  <DeleteSetBox deleteJsonTrees={this.deleteJsonTrees} />
+                </div>
+              )
+            }
+          } else if (this.jsonIsWhichObj(node.cJ) === 'else') {
+            // 判斷為 'else' 字串者，表示可能是圖片、文字、影片等等等不同 HTML TAG，會依 node.cJ實際字串內容來決定
+            return (<img src='img/k.jpg' />)
           }
         } else if (!ObjIsObject) {
           // 代表 node 是 []
@@ -575,6 +587,11 @@ $(function () {
               draggable='true'
               onDragStart={this.ondragstart}
             > 添加一個框框 </div>
+            <div
+              id='imgTag'
+              draggable='true'
+              onDragStart={this.ondragstart}
+            > 添加一張圖片 </div>
           </div>
           <div>
             <div id='operatingArea'
@@ -597,21 +614,14 @@ $(function () {
 
       $('#operatingArea div').not('.deleteSetBox').hover(function (e) {
         var $this = $(this)
-        console.log($this.attr('id') + 'is in')
-
         $this.parents().mouseleave() // 把自己的爸爸關掉
-
         var findLength = $this.find('.deleteSetBox').length - 1
         $this.find('.deleteSetBox').eq(findLength).show()
-
         e.stopPropagation()
       }, function (e) {
         var $this = $(this)
-        console.log($this.attr('id') + 'is out')
-
         $('.deleteSetBox').hide() // 全關了
         $this.parent().mouseenter() // 順便把自己爸爸打開一下
-
         e.stopPropagation()
       })
       // 注意冒泡以及重疊問題
