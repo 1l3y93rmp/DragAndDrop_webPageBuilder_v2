@@ -283,10 +283,16 @@ $(function () {
     }
 
     ondragstart (e) { // 被綁在被拖的東西的 (#menu內的)
-      e.dataTransfer.setData('text/plain', e.target.id, this.altCopymode)
+      e.dataTransfer.setData('draggedId', e.target.id)
       // dataTransfer 可以把一些資料傳給 dropped (也就是被拖來放的那個物件上 onDrop 事件的方法) 這個方法
+      if (e.target.tagName === 'DIV') {
+        // 得知被拖的 是啥HTML TAG， 如果不是DIV只能被拖動到DIV內 (嚴禁與DIV並排)
+        // 多傳一個值給 dragoverGoSlect 使該方法控制被拖DIV 添加方式之限制
+        e.dataTransfer.setData('canIAbreast', true)
+      }
 
-      if (!this.altCopymode && /[-]|\d{1}$/g.test(e.target.id)) { // 移動模式
+      // altCopymode指的是是否有按住ALT 按住的話會變成複製模式
+      if (!this.altCopymode && /[-]|\d{1}$/g.test(e.target.id)) { // 移動已經產出的HTML TAG模式
         console.log(this.climbingJsonTrees(this.state.cJ, e.target.id.split('-')))
         this.climbingJsonTrees(this.state.cJ, e.target.id.split('-')).delete = true
       }
@@ -346,13 +352,25 @@ $(function () {
     }
 
     dragoverGoSlect (isWrap, ctrlOutSiteTB, ctrlOutSiteLR, e) { // 被拖著旋停時 下面的物件 需要添加Class
-      var $target = $(e.currentTarget)
+      // 這個涵式只要旋停時就會不斷的觸發
+      var $target = $(e.currentTarget) // 這是被拖到者的target
+      // e.dataTransfer.getData('canIAbreast') 空字串
+      var dataTransferAlltypes = e.dataTransfer.types
+      var caniabreast = false
+      for (var i = 0; i < dataTransferAlltypes.length; i++) {
+        if (dataTransferAlltypes[i] === 'caniabreast') {
+          caniabreast = true
+          break
+        }
+      }
+
       var nowClass = $target.attr('class')
       if (nowClass) {
         nowClass = nowClass.substr(nowClass.length - 1)
         // 只要判斷最後一個字母
       }
-      let addRule = this.mousePosition(isWrap, ctrlOutSiteTB, ctrlOutSiteLR, e)
+      let addRule = caniabreast ? this.mousePosition(isWrap, ctrlOutSiteTB, ctrlOutSiteLR, e) : 'C'
+      // 如果 不允許並排，那麼只有一個選擇就是 C (放中間)
       if (addRule === 'X') {
         $target.removeClass('Slect L R C T B l r b t X')
       } else {
@@ -371,7 +389,7 @@ $(function () {
     }
 
     dropped (e) { // 被綁在可被拖來放的框框 onDrop時調用這個方法
-      var beingDraggedID = e.dataTransfer.getData('text/plain') // 從 ondragstart 方法傳來的拖者ID (字串)
+      var beingDraggedID = e.dataTransfer.getData('draggedId') // 從 ondragstart 方法傳來的拖者ID (字串)
       var $target = $(e.currentTarget)
       var $targetClass = $target.attr('class')
       var operatingWay = $targetClass.substr($targetClass.length - 1) // 得知操作方法 (字串)
@@ -476,7 +494,6 @@ $(function () {
           if (typeof (this.jsonIsWhichObj(node.cJ)) === 'boolean') {
             if (node.cJ.length) {
               // 如果node的cJ 裡面還是有東西(而且node是{}) 靠遞迴自己叫自己
-
               return (
                 <div
                   id={myKey}
@@ -512,7 +529,11 @@ $(function () {
             }
           } else if (this.jsonIsWhichObj(node.cJ) === 'else') {
             // 判斷為 'else' 字串者，表示可能是圖片、文字、影片等等等不同 HTML TAG，會依 node.cJ實際字串內容來決定
-            return (<img src='img/k.jpg' />)
+            return (
+              <img
+                id={myKey}
+                key={index}
+                src='img/k.jpg' />)
           }
         } else if (!ObjIsObject) {
           // 代表 node 是 []
@@ -587,11 +608,12 @@ $(function () {
               draggable='true'
               onDragStart={this.ondragstart}
             > 添加一個框框 </div>
-            <div
+            <img
               id='imgTag'
               draggable='true'
               onDragStart={this.ondragstart}
-            > 添加一張圖片 </div>
+              src='img/k.jpg'
+            />
           </div>
           <div>
             <div id='operatingArea'
