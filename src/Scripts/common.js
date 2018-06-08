@@ -456,13 +456,6 @@ $(function () {
           // console.log('放開' + this.altCopymode)
         }
       })
-
-      $('#operatingArea div').hover(function () {
-        $(this).find('.deleteSetBox').slideDown()
-      }, function () {
-        $(this).find('.deleteSetBox').slideUp()
-      })
-      // 注意冒泡 以及綁定時間...
     }
 
     mapToCreatDiv (cJdata, previousKey) {
@@ -596,6 +589,32 @@ $(function () {
           </div>
         </React.Fragment>
       )
+    }
+
+    componentDidUpdate () {
+      // 每當化面更新 重綁所有的 hover
+      $('#operatingArea div').off('mouseenter mouseleave')
+
+      $('#operatingArea div').not('.deleteSetBox').hover(function (e) {
+        var $this = $(this)
+        console.log($this.attr('id') + 'is in')
+
+        $this.parents().mouseleave() // 把自己的爸爸關掉
+
+        var findLength = $this.find('.deleteSetBox').length - 1
+        $this.find('.deleteSetBox').eq(findLength).show()
+
+        e.stopPropagation()
+      }, function (e) {
+        var $this = $(this)
+        console.log($this.attr('id') + 'is out')
+
+        $('.deleteSetBox').hide() // 全關了
+        $this.parent().mouseenter() // 順便把自己爸爸打開一下
+
+        e.stopPropagation()
+      })
+      // 注意冒泡以及重疊問題
     }
   }
 
