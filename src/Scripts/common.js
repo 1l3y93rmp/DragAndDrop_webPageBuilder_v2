@@ -363,6 +363,9 @@ $(function () {
           break
         }
       }
+      if ($target.find('div').not('.deleteSetBox').length && !caniabreast) return
+      // 利用 JQ判斷是否有併排物... 如果有可以直接跳出此操作
+      // 是否用Stage 判斷會比較優雅??
 
       var nowClass = $target.attr('class')
       if (nowClass) {
@@ -392,6 +395,16 @@ $(function () {
       var beingDraggedID = e.dataTransfer.getData('draggedId') // 從 ondragstart 方法傳來的拖者ID (字串)
       var $target = $(e.currentTarget)
       var $targetClass = $target.attr('class')
+
+      $target.removeClass('Slect L R C T B l r b t X')
+
+      if (!e.dataTransfer.getData('canIAbreast')) {
+        // ondragstart 是否有傳來 canIAbreast (可併排)的值? 不可的話要檢查放置處必須是空的
+        if ($target.find('div').not('.deleteSetBox').length) return
+        // $target 放置處的內容物是否除了控制框無其他DOM? 若有 值接跳出
+        // 是否用Stage 判斷會比較優雅??
+      }
+
       var operatingWay = $targetClass.substr($targetClass.length - 1) // 得知操作方法 (字串)
       var isLowerCase = /[a-z]/g.test(operatingWay) // 得知方法是否小寫 (布林)
       var isRow = $target.attr('data-row') // 得知是否為 data-row (字串/ㄤㄉfine)
@@ -402,8 +415,6 @@ $(function () {
       console.log('被放者的ID:' + $target.attr('id'))
 
       var newCj = this.state.cJ
-
-      $target.removeClass('Slect L R C T B l r b t X')
 
       var copylevel
       copylevel = JSON.parse(JSON.stringify(level))
