@@ -363,9 +363,10 @@ $(function () {
           break
         }
       }
-      if ($target.find('div').not('.deleteSetBox').length && !caniabreast) return
+
       // 利用 JQ判斷是否有併排物... 如果有可以直接跳出此操作
-      // 是否用Stage 判斷會比較優雅??
+      var copyJson = JSON.parse(JSON.stringify(this.state.cJ))
+      if (this.climbingJsonTrees(copyJson, e.currentTarget.id.split('-')).cJ.length && !caniabreast) return
 
       var nowClass = $target.attr('class')
       if (nowClass) {
@@ -400,7 +401,9 @@ $(function () {
 
       if (!e.dataTransfer.getData('canIAbreast')) {
         // ondragstart 是否有傳來 canIAbreast (可併排)的值? 不可的話要檢查放置處必須是空的
-        if ($target.find('div').not('.deleteSetBox').length) return
+        var copyJson = JSON.parse(JSON.stringify(this.state.cJ))
+
+        if (this.climbingJsonTrees(copyJson, e.currentTarget.id.split('-')).cJ.length) return
         // $target 放置處的內容物是否除了控制框無其他DOM? 若有 值接跳出
         // 是否用Stage 判斷會比較優雅??
       }
@@ -495,7 +498,6 @@ $(function () {
 
     mapToCreatDiv (cJdata, previousKey) {
       return cJdata.map((node, index) => {
-        console.log(node)
         var myKey = previousKey === undefined ? index : previousKey + '-' + index
         // 注意 : myKey 並不紀錄DOM巢狀，而是紀錄JSON資料的巢狀
         var ObjIsObject = this.jsonIsWhichObj(node)
