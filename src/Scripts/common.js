@@ -247,6 +247,8 @@ $(function () {
     }
 
     findJsonTree (json, keyWord) { // 用特殊屬性爬Json樹
+      // 如果內容物有keyWord 做為特性(不論幾層)，會回應 True
+      // 反之 回應 undefind
       // 要先知道傳進來的這棵樹是{} 還是 [] 才知道要怎麼爬
 
       var jsonString
@@ -254,7 +256,7 @@ $(function () {
       if (ObjIsObject) {
         // {}
         if (json.hasOwnProperty(keyWord)) {
-          return true
+          return 'goDeepLayer'
         } else {
           // 要往更深層去找
           return this.findJsonTree(json.cJ, keyWord)
@@ -263,18 +265,19 @@ $(function () {
         // []
         for (var i = 0; i < json.length; i++) {
           jsonString = JSON.stringify(json[i])
-          console.log(jsonString)
-          var regex = new RegExp('"' + keyWord + '":true', 'g')
+          var regex = new RegExp('"' + keyWord + '":', 'g')
           if (regex.test(jsonString.substr(jsonString.length - 15))) {
-            json.splice(i, 1) // 暫時都只有寫刪除的動作
-            break
+            if (keyWord === 'delete') json.splice(i, 1) // 如果是刪除的動作，在這邊會刪掉
+            return true
+            // break
           } else {
             // 有可能是真的沒有 也有可能是在更深層
             if (regex.test(jsonString)) {
               // 在深層 要繼續往下
-              if (this.findJsonTree(json[i], keyWord)) {
+              if (this.findJsonTree(json[i], keyWord) === 'goDeepLayer') {
                 // 如果回應了True，表示他是 {} 刪不掉自己，得要靠這裡刪
-                json.splice(i, 1) // 暫時都只有寫刪除的動作
+                if (keyWord === 'delete') json.splice(i, 1) // 如果是刪除的動作，在這邊會刪掉
+                return true
               }
             }
           }
@@ -364,9 +367,16 @@ $(function () {
         }
       }
 
-      // 利用 JQ判斷是否有併排物... 如果有可以直接跳出此操作
+      // 若不可併排 而且同一層中還有其他物件，直接跳出dragoverGoSlect方法
       var copyJson = JSON.parse(JSON.stringify(this.state.cJ))
       if (this.climbingJsonTrees(copyJson, e.currentTarget.id.split('-')).cJ.length && !caniabreast) return
+
+      // 如果同一層中有物件為不可併排者，也直接跳出dragoverGoSlect方法
+      // var myBrothersIsAbreast = true
+
+      var myBrothersIsAbreast = this.findJsonTree(this.climbingJsonTrees(copyJson, e.currentTarget.id.split('-')), 'url') // 若有找到 請勿並排
+      console.log(myBrothersIsAbreast)
+      if (myBrothersIsAbreast) return
 
       var nowClass = $target.attr('class')
       if (nowClass) {
@@ -405,7 +415,6 @@ $(function () {
 
         if (this.climbingJsonTrees(copyJson, e.currentTarget.id.split('-')).cJ.length) return
         // $target 放置處的內容物是否除了控制框無其他DOM? 若有 值接跳出
-        // 是否用Stage 判斷會比較優雅??
       }
 
       var operatingWay = $targetClass.substr($targetClass.length - 1) // 得知操作方法 (字串)
