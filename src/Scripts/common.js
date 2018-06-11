@@ -356,6 +356,7 @@ $(function () {
 
     dragoverGoSlect (isWrap, ctrlOutSiteTB, ctrlOutSiteLR, e) { // 被拖著旋停時 下面的物件 需要添加Class
       // 這個涵式只要旋停時就會不斷的觸發
+
       var $target = $(e.currentTarget) // 這是被拖到者的target
       // e.dataTransfer.getData('canIAbreast') 空字串
       var dataTransferAlltypes = e.dataTransfer.types
@@ -366,17 +367,22 @@ $(function () {
           break
         }
       }
-
-      // 若不可併排 而且同一層中還有其他物件，直接跳出dragoverGoSlect方法
       var copyJson = JSON.parse(JSON.stringify(this.state.cJ))
-      if (this.climbingJsonTrees(copyJson, e.currentTarget.id.split('-')).cJ.length && !caniabreast) return
-
       // 如果同一層中有物件為不可併排者，也直接跳出dragoverGoSlect方法
-      // var myBrothersIsAbreast = true
-
       var myBrothersIsAbreast = this.findJsonTree(this.climbingJsonTrees(copyJson, e.currentTarget.id.split('-')), 'url') // 若有找到 請勿並排
       console.log(myBrothersIsAbreast)
-      if (myBrothersIsAbreast) return
+      console.log($target)
+      if (myBrothersIsAbreast) {
+        this.cancelDefault(e)
+        return
+      }
+
+      // 若不可併排 而且同一層中還有其他物件，直接跳出dragoverGoSlect方法
+
+      if (this.climbingJsonTrees(copyJson, e.currentTarget.id.split('-')).cJ.length && !caniabreast) {
+        this.cancelDefault(e)
+        return
+      }
 
       var nowClass = $target.attr('class')
       if (nowClass) {
@@ -408,13 +414,20 @@ $(function () {
       var $targetClass = $target.attr('class')
 
       $target.removeClass('Slect L R C T B l r b t X')
-
+      var copyJson = JSON.parse(JSON.stringify(this.state.cJ))
       if (!e.dataTransfer.getData('canIAbreast')) {
         // ondragstart 是否有傳來 canIAbreast (可併排)的值? 不可的話要檢查放置處必須是空的
-        var copyJson = JSON.parse(JSON.stringify(this.state.cJ))
-
-        if (this.climbingJsonTrees(copyJson, e.currentTarget.id.split('-')).cJ.length) return
+        if (this.climbingJsonTrees(copyJson, e.currentTarget.id.split('-')).cJ.length) {
+          this.cancelDefault(e)
+          return
+        }
         // $target 放置處的內容物是否除了控制框無其他DOM? 若有 值接跳出
+      }
+
+      var myBrothersIsAbreast = this.findJsonTree(this.climbingJsonTrees(copyJson, e.currentTarget.id.split('-')), 'url') // 若有找到 請勿並排
+      if (myBrothersIsAbreast) {
+        this.cancelDefault(e)
+        return
       }
 
       var operatingWay = $targetClass.substr($targetClass.length - 1) // 得知操作方法 (字串)
