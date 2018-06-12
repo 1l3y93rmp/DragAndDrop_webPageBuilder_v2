@@ -301,6 +301,10 @@ $(function () {
       }
     }
 
+    dragleaveGoBack (e) { // leave的時候 變回白色
+      $(e.currentTarget).removeClass('Slect L R C T B l r b t X')
+    }
+
     cancelDefault (e) { // 在防止預設行為的方法，被 dropped dragoverGoSlect 調用
       e.preventDefault()
       e.stopPropagation()
@@ -308,13 +312,13 @@ $(function () {
     }
 
     mousePosition (isWrap, ctrlOutSiteTB, ctrlOutSiteLR, e) { // 得知游標的位置靠近哪裡給予相對應的CLASS名稱 內側/外側 / 上/下/左/右/中間 是否開啟某些特殊的感應區?
-      var $target = $(e.currentTarget)
+      let $target = $(e.currentTarget)
 
       // 判斷DIV的順序 或是它是否為data-row來決定他是否能夠出現哪些被拖曳時的Class
-      var targetIndex = $target.attr('id').split('-')
+      let targetIndex = $target.attr('id').split('-')
 
       // 該DIV本身是不是 Row ?
-      var isRow = $target.attr('data-row')
+      let isRow = $target.attr('data-row')
       targetIndex = isRow ? targetIndex[targetIndex.length - 2] : targetIndex[targetIndex.length - 1]
 
       // 是否控制外部LR? 如果自己是Row 禁止操控外部LR，接下來就看是否有同輩
@@ -357,34 +361,42 @@ $(function () {
     dragoverGoSlect (isWrap, ctrlOutSiteTB, ctrlOutSiteLR, e) { // 被拖著旋停時 下面的物件 需要添加Class
       // 這個涵式只要旋停時就會不斷的觸發
 
-      var $target = $(e.currentTarget) // 這是被拖到者的target
+      let $target = $(e.currentTarget) // 這是被拖到者的target
+
       // e.dataTransfer.getData('canIAbreast') 空字串
-      var dataTransferAlltypes = e.dataTransfer.types
-      var caniabreast = false
-      for (var i = 0; i < dataTransferAlltypes.length; i++) {
+      let dataTransferAlltypes = e.dataTransfer.types
+      let caniabreast = false
+      for (let i = 0; i < dataTransferAlltypes.length; i++) {
         if (dataTransferAlltypes[i] === 'caniabreast') {
-          caniabreast = true
+          caniabreast = true // 先得知該被拖者是否帶著 該物件無法並排的資訊
           break
         }
       }
-      var copyJson = JSON.parse(JSON.stringify(this.state.cJ))
-      // 如果同一層中有物件為不可併排者，也直接跳出dragoverGoSlect方法
-      var myBrothersIsAbreast = this.findJsonTree(this.climbingJsonTrees(copyJson, e.currentTarget.id.split('-')), 'url') // 若有找到 請勿並排
-      console.log(myBrothersIsAbreast)
-      console.log($target)
-      if (myBrothersIsAbreast) {
+
+      let copyJson = JSON.parse(JSON.stringify(this.state.cJ))
+      let branch = this.climbingJsonTrees(copyJson, e.currentTarget.id.split('-'))
+
+      if (!caniabreast && branch.cJ.length) {
+        console.log('你拖動的是一個必須獨立存在DIV的物件，這裡已經被霸占')
         this.cancelDefault(e)
         return
       }
 
-      // 若不可併排 而且同一層中還有其他物件，直接跳出dragoverGoSlect方法
+      let sideBySide = true
+      for (let i = 0; i < branch.cJ.length; i++) {
+        if (typeof (branch.cJ[i].cJ) === 'string') {
+          sideBySide = false
+          break
+        }
+      }
 
-      if (this.climbingJsonTrees(copyJson, e.currentTarget.id.split('-')).cJ.length && !caniabreast) {
+      if (!sideBySide) { // 若有找到 請勿並排
+        console.log('含有不能並排的內容物')
         this.cancelDefault(e)
         return
       }
 
-      var nowClass = $target.attr('class')
+      let nowClass = $target.attr('class')
       if (nowClass) {
         nowClass = nowClass.substr(nowClass.length - 1)
         // 只要判斷最後一個字母
@@ -396,7 +408,7 @@ $(function () {
       } else {
         if (nowClass && nowClass.indexOf(addRule) === -1) {
           // 表示CLASS該換了
-          var oldClass = nowClass.substring(nowClass.length - 1)
+          let oldClass = nowClass.substring(nowClass.length - 1)
           $target.removeClass(oldClass)
         }
         $target.addClass('Slect ' + addRule)
@@ -404,45 +416,51 @@ $(function () {
       this.cancelDefault(e)
     }
 
-    dragleaveGoBack (e) { // leave的時候 變回白色
-      $(e.currentTarget).removeClass('Slect L R C T B l r b t X')
-    }
-
     dropped (e) { // 被綁在可被拖來放的框框 onDrop時調用這個方法
-      var beingDraggedID = e.dataTransfer.getData('draggedId') // 從 ondragstart 方法傳來的拖者ID (字串)
-      var $target = $(e.currentTarget)
-      var $targetClass = $target.attr('class')
-
+      let beingDraggedID = e.dataTransfer.getData('draggedId') // 從 ondragstart 方法傳來的拖者ID (字串)
+      let $target = $(e.currentTarget)
+      let $targetClass = $target.attr('class')
       $target.removeClass('Slect L R C T B l r b t X')
-      var copyJson = JSON.parse(JSON.stringify(this.state.cJ))
-      if (!e.dataTransfer.getData('canIAbreast')) {
-        // ondragstart 是否有傳來 canIAbreast (可併排)的值? 不可的話要檢查放置處必須是空的
-        if (this.climbingJsonTrees(copyJson, e.currentTarget.id.split('-')).cJ.length) {
+
+      let isRow = $target.attr('data-row') // 得知是否為 data-row (字串/ㄤㄉfine)
+      let beingDraggedIDlevel = beingDraggedID.split('-') // 得知 被拖的 ID帶的層級數字 (陣列)
+      let level = $target.attr('id') === 'operatingArea' ? [] : $target.attr('id').split('-') // 得知ID (被放的)帶的層級數字 (陣列)
+
+      let operatingWay = $targetClass.substr($targetClass.length - 1) // 得知操作方法 (字串)
+      let isLowerCase = /[a-z]/g.test(operatingWay) // 得知方法是否小寫 (布林)
+
+      // console.log('被拖者的ID:' + beingDraggedID)
+      // console.log('被放者的ID:' + $target.attr('id'))
+
+      let newCj = this.state.cJ
+
+      let copylevel, copyJson, copyBranch
+      let sideBySide = true
+      copylevel = JSON.parse(JSON.stringify(level))
+      copyJson = JSON.parse(JSON.stringify(newCj))
+      copyBranch = this.climbingJsonTrees(copyJson, e.currentTarget.id.split('-'))
+      // 防止干擾 若純用於搜尋的話必須用複製的， 如果真的要異動依賴傳址的方式異動 newCj
+
+      if (!e.dataTransfer.getData('canIAbreast')) { // ondragstart 是否有傳來 canIAbreast (可併排)的值? 不可的話要檢查放置處必須是空的
+        if (copyBranch.cJ.length) {
+          console.log('你拖動的是一個必須獨立存在DIV的物件，這裡已經被霸占，勿放')
           this.cancelDefault(e)
           return
         }
-        // $target 放置處的內容物是否除了控制框無其他DOM? 若有 值接跳出
       }
 
-      var myBrothersIsAbreast = this.findJsonTree(this.climbingJsonTrees(copyJson, e.currentTarget.id.split('-')), 'url') // 若有找到 請勿並排
-      if (myBrothersIsAbreast) {
+      for (let i = 0; i < copyBranch.cJ.length; i++) {
+        if (typeof (copyBranch.cJ[i].cJ) === 'string') {
+          sideBySide = false
+          break
+        }
+      }
+
+      if (!sideBySide) { // 若有找到 請勿並排
+        console.log('含有不能並排的內容物，停止dropped以下任何操作')
         this.cancelDefault(e)
         return
       }
-
-      var operatingWay = $targetClass.substr($targetClass.length - 1) // 得知操作方法 (字串)
-      var isLowerCase = /[a-z]/g.test(operatingWay) // 得知方法是否小寫 (布林)
-      var isRow = $target.attr('data-row') // 得知是否為 data-row (字串/ㄤㄉfine)
-      var beingDraggedIDlevel = beingDraggedID.split('-') // 得知 被拖的 ID帶的層級數字 (陣列)
-      var level = $target.attr('id') === 'operatingArea' ? [] : $target.attr('id').split('-') // 得知ID (被放的)帶的層級數字 (陣列)
-
-      console.log('被拖者的ID:' + beingDraggedID)
-      console.log('被放者的ID:' + $target.attr('id'))
-
-      var newCj = this.state.cJ
-
-      var copylevel
-      copylevel = JSON.parse(JSON.stringify(level))
 
       if (isLowerCase) {
         // 這裡是指level 往上爬一層，當控制 Class 為小寫表是控制外部，climbingJsonTrees方法要往上爬一層
@@ -453,8 +471,6 @@ $(function () {
           copylevel.pop()
         }
       }
-      // console.log(level)
-      // console.log(copylevel)
 
       if (beingDraggedID === 'emptyBox') { // 被拖的東西ID 如果是空Box
         console.log('添加模式(空盒)')
