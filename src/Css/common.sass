@@ -21,6 +21,7 @@
   padding: 15px
   box-sizing: border-box
   transition: padding .3s
+  overflow: hidden
   div
     min-height: 300px
     border: 1px solid #ccc
@@ -33,7 +34,8 @@
     z-index: 2
     transition: padding .3s
     position: relative
-    
+    vertical-align: top  
+    overflow: hidden
     .deleteSetBox
       position: absolute
       display: block
@@ -54,6 +56,7 @@
 .Slect
   z-index: 1
   position: relative
+  &.C
   &.L, &.R, &.T, &.B, &.C
     &::after
       content: ''

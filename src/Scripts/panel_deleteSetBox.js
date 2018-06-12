@@ -5,6 +5,9 @@
 // 因為 browserify打包模塊太慢了 開發不使用
 
 class deleteSetBox extends React.Component {
+  constructor (props) {
+    super(props)
+  }
   render () {
     return (
       <div className='deleteSetBox'>

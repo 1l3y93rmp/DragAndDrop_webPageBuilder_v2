@@ -5,6 +5,8 @@
 // 因為 browserify打包外部模塊太慢了 開發不使用
 
 import DeleteSetBox from './panel_deleteSetBox'
+import TemplateImg from './template_img'
+import TemplateText from './template_text'
 
 $(function () {
   class MenuAndOperatingArea extends React.Component {
@@ -296,7 +298,6 @@ $(function () {
 
       // altCopymode指的是是否有按住ALT 按住的話會變成複製模式
       if (!this.altCopymode && /[-]|\d{1}$/g.test(e.target.id)) { // 移動已經產出的HTML TAG模式
-        console.log(this.climbingJsonTrees(this.state.cJ, e.target.id.split('-')))
         this.climbingJsonTrees(this.state.cJ, e.target.id.split('-')).delete = true
       }
     }
@@ -481,7 +482,12 @@ $(function () {
 
       if (beingDraggedID === 'imgTag') { // 被拖動的東西ID是 圖片
         console.log('添加模式(圖片)')
-        this.addJsonTrees({cJ: 'Img', url: 'img/k.jpg', alt: ''}, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
+        this.addJsonTrees({cJ: 'Img', url: 'img/k.jpg', alt: '圖片說明'}, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
+      }
+
+      if (beingDraggedID === 'TextTag') { // 被拖動的東西ID是 圖片
+        console.log('添加模式(文字)')
+        this.addJsonTrees({cJ: 'Text', text: '請輸入文字'}, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
       }
 
       if (/[-]/g.test(beingDraggedID) || /\d{1}/g.test(beingDraggedID)) { // 被拖的東西ID 是一個複雜的DIV 且用爬樹把她找出來
@@ -580,11 +586,24 @@ $(function () {
             }
           } else if (this.jsonIsWhichObj(node.cJ) === 'else') {
             // 判斷為 'else' 字串者，表示可能是圖片、文字、影片等等等不同 HTML TAG，會依 node.cJ實際字串內容來決定
-            return (
-              <img
-                id={myKey}
-                key={index}
-                src='img/k.jpg' />)
+            if (node.cJ === 'Img') {
+              return (
+                <TemplateImg
+                  id={myKey}
+                  index={index}
+                  alt={node.alt}
+                  src={node.url}
+                  onDragStartFunction={this.ondragstart}
+                />)
+            } else if (node.cJ === 'Text') {
+              return (
+                <TemplateText
+                  id={myKey}
+                  index={index}
+                  text={node.text}
+                  onDragStartFunction={this.ondragstart}
+                />)
+            }
           }
         } else if (!ObjIsObject) {
           // 代表 node 是 []
@@ -650,7 +669,6 @@ $(function () {
 
     render () {
       // render operatingArea 時 會參照 State 內的資料
-      console.table(this.state)
       return (
         <React.Fragment>
           <div id='menu'>
@@ -665,6 +683,11 @@ $(function () {
               onDragStart={this.ondragstart}
               src='img/k.jpg'
             />
+            <p
+              id='TextTag'
+              draggable='true'
+              onDragStart={this.ondragstart}
+            >添加一段文字</p>
           </div>
           <div>
             <div id='operatingArea'
