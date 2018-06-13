@@ -5,6 +5,7 @@
 // 因為 browserify打包外部模塊太慢了 開發不使用
 
 import DeleteSetBox from './panel_deleteSetBox'
+import PanelSetImg from './panel_setImg'
 import TemplateImg from './template_img'
 import TemplateText from './template_text'
 
@@ -14,12 +15,16 @@ $(function () {
       super()
       // contentJson 縮寫成 cJ
       this.state = {
-        cJ: []
+        cJ: [],
+        editBranch: {},
+        nowEditType: ''
       }
 
-      this.altCopymode = false
-      this.UndoIndex = 0 // 回覆的次數
+      this.altCopymode = false // 當前到底有沒有在按alt
+      this.UndoIndex = 0 // 當前復原Z的次數
+      this.editLevel = [] // 當前 panel浮動面板所編集的對象之層級
 
+      // 分享this給大家
       this.dropped = this.dropped.bind(this)
       this.dragoverGoSlect = this.dragoverGoSlect.bind(this)
       this.climbingJsonTrees = this.climbingJsonTrees.bind(this)
@@ -29,6 +34,8 @@ $(function () {
       this.findJsonTree = this.findJsonTree.bind(this)
       this.saveStateinLocalStorage = this.saveStateinLocalStorage.bind(this)
       this.recoveryState = this.recoveryState.bind(this)
+      this.changeAndSaveDomAttribute = this.changeAndSaveDomAttribute.bind(this)
+      this.showPanel = this.showPanel.bind(this)
     }
 
     jsonIsWhichObj (obj) { // 用來判斷JSON最外層是什麼樣的Obj 如果是{} 回應True []回應False
@@ -590,10 +597,11 @@ $(function () {
               return (
                 <TemplateImg
                   id={myKey}
-                  index={index}
+                  key={index}
                   alt={node.alt}
                   src={node.url}
                   onDragStartFunction={this.ondragstart}
+                  onClickFunction={this.showPanel}
                 />)
             } else if (node.cJ === 'Text') {
               return (
@@ -666,11 +674,10 @@ $(function () {
         }
       })
     }
-
     render () {
       // render operatingArea 時 會參照 State 內的資料
       return (
-        <React.Fragment>
+        <div>
           <div id='menu'>
             <div
               id='emptyBox'
@@ -689,6 +696,14 @@ $(function () {
               onDragStart={this.ondragstart}
             >添加一段文字</p>
           </div>
+          <div className='panelBox'> {/* 浮動操作面板放置區 */}
+            {this.state.nowEditType === 'Img' &&
+              <PanelSetImg
+                save={this.changeAndSaveDomAttribute}
+                nowBranchData={this.state.editBranch}
+              />
+            }
+          </div>
           <div>
             <div id='operatingArea'
               data-role='drag-drop-container'
@@ -700,7 +715,7 @@ $(function () {
               {this.mapToCreatDiv(this.state.cJ)}
             </div>
           </div>
-        </React.Fragment>
+        </div>
       )
     }
 
@@ -721,6 +736,30 @@ $(function () {
         e.stopPropagation()
       })
       // 注意冒泡以及重疊問題
+    }
+
+    showPanel (type, e) { // 將浮動面板打開，並且傳入相關 level 資訊
+      $('.panelBox').show()
+      let domID = e.target.id.split('-') // 取得level
+      this.setState({
+        editBranch: this.climbingJsonTrees(this.state.cJ, domID),
+        nowEditType: type
+      })
+    }
+
+    changeAndSaveDomAttribute (type, newData) { // 專門處裏由 panel 浮動面板傳來異動this.state.cJ的處理
+      let newCj = this.state.cJ
+      let branch = this.climbingJsonTrees(newCj, this.editLevel) // 找到當前要編集的小樹枝
+      if (branch.cJ === type) {
+        for (let v in newData) {
+          branch[v] = newData[v] // 取代掉裏面的特性
+        }
+
+        this.setState({cJ: newCj})
+        this.saveStateinLocalStorage() // 改完了 存個檔
+      } else {
+        console.log('DOM型態不符合喔...')
+      }
     }
   }
 

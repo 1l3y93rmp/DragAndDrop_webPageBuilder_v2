@@ -11,11 +11,11 @@ class TemplateImg extends React.Component {
     return (
       <img
         id={this.props.id}
-        key={this.props.index}
         draggable='true'
-        onDragStart={this.props.onDragStartFunction}
         alt={this.props.alt}
-        src={this.props.src} />
+        src={this.props.src}
+        onDragStart={this.props.onDragStartFunction}
+        onClick={this.props.onClickFunction.bind(null, 'Img')} />
     )
   }
 }
