@@ -6,6 +6,7 @@
 
 import DeleteSetBox from './panel_deleteSetBox'
 import PanelSetImg from './panel_setImg'
+import PanelSetText from './panel_setText'
 import TemplateImg from './template_img'
 import TemplateText from './template_text'
 
@@ -609,9 +610,10 @@ $(function () {
               return (
                 <TemplateText
                   id={myKey}
-                  index={index}
+                  key={index}
                   text={node.text}
                   onDragStartFunction={this.ondragstart}
+                  onClickFunction={this.showPanel}
                 />)
             }
           }
@@ -706,6 +708,13 @@ $(function () {
                 nowBranchData={this.state.editBranch}
               />
             }
+            {this.state.nowEditType === 'Text' &&
+              <PanelSetText
+                save={this.changeAndSaveDomAttribute}
+                cancel={this.cancelPanel}
+                nowBranchData={this.state.editBranch}
+              />
+            }
           </div>
           <div>
             <div id='operatingArea'
@@ -743,12 +752,10 @@ $(function () {
 
     showPanel (type, e) { // 將浮動面板打開，並且傳入相關 level 資訊
       $('.panelBox').show()
-      let domID = e.target.id.split('-') // 取得level
-      console.log(domID)
       this.setState({
-        editBranch: this.climbingJsonTrees(this.state.cJ, domID),
+        editBranch: this.climbingJsonTrees(this.state.cJ, e.target.id.split('-')),
         nowEditType: type,
-        editLevel: e.target.id.split('-')
+        editLevel: e.target.id.split('-') // 取得level
       })
     }
 

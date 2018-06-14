@@ -73,10 +73,6 @@ class panelSetImg extends React.Component {
       </div>
     )
   }
-
-  componentWillUnmount () {
-    console.log('下次見')
-  }
 }
 
 module.exports = panelSetImg
