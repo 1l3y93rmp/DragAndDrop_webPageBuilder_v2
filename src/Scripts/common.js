@@ -17,12 +17,12 @@ $(function () {
       this.state = {
         cJ: [],
         editBranch: {},
-        nowEditType: ''
+        nowEditType: '',
+        editLevel: []
       }
 
       this.altCopymode = false // 當前到底有沒有在按alt
       this.UndoIndex = 0 // 當前復原Z的次數
-      this.editLevel = [] // 當前 panel浮動面板所編集的對象之層級
 
       // 分享this給大家
       this.dropped = this.dropped.bind(this)
@@ -36,6 +36,7 @@ $(function () {
       this.recoveryState = this.recoveryState.bind(this)
       this.changeAndSaveDomAttribute = this.changeAndSaveDomAttribute.bind(this)
       this.showPanel = this.showPanel.bind(this)
+      this.cancelPanel = this.cancelPanel.bind(this)
     }
 
     jsonIsWhichObj (obj) { // 用來判斷JSON最外層是什麼樣的Obj 如果是{} 回應True []回應False
@@ -525,18 +526,19 @@ $(function () {
       document.addEventListener('keydown', (e) => {
         if (e.keyCode === 18) {
           this.altCopymode = true
-          // console.log('按下' + this.altCopymode)
+          e.preventDefault()
+          // 為什麼要寫這個 我也不懂 沒寫的話keyup後要再點擊一次畫面這個事件才能再次有效
         }
 
-        if (e.keyCode === 90 && e.ctrlKey) {
+        if (e.keyCode === 90 && e.ctrlKey) { // Ctrl+Z
           this.recoveryState(false)
+          e.preventDefault()
         }
 
-        if (e.keyCode === 89 && e.ctrlKey) {
+        if (e.keyCode === 89 && e.ctrlKey) { // Ctrl+y
           this.recoveryState(true)
+          e.preventDefault()
         }
-
-        e.preventDefault() // 為什麼要寫這個 我也不懂 沒寫的話keyup後要再點擊一次畫面這個事件才能再次有效
       })
 
       document.addEventListener('keyup', (e) => {
@@ -700,6 +702,7 @@ $(function () {
             {this.state.nowEditType === 'Img' &&
               <PanelSetImg
                 save={this.changeAndSaveDomAttribute}
+                cancel={this.cancelPanel}
                 nowBranchData={this.state.editBranch}
               />
             }
@@ -741,15 +744,18 @@ $(function () {
     showPanel (type, e) { // 將浮動面板打開，並且傳入相關 level 資訊
       $('.panelBox').show()
       let domID = e.target.id.split('-') // 取得level
+      console.log(domID)
       this.setState({
         editBranch: this.climbingJsonTrees(this.state.cJ, domID),
-        nowEditType: type
+        nowEditType: type,
+        editLevel: e.target.id.split('-')
       })
     }
 
     changeAndSaveDomAttribute (type, newData) { // 專門處裏由 panel 浮動面板傳來異動this.state.cJ的處理
-      let newCj = this.state.cJ
-      let branch = this.climbingJsonTrees(newCj, this.editLevel) // 找到當前要編集的小樹枝
+      var newCj = this.state.cJ
+      var branch = this.climbingJsonTrees(newCj, this.state.editLevel)
+
       if (branch.cJ === type) {
         for (let v in newData) {
           branch[v] = newData[v] // 取代掉裏面的特性
@@ -757,9 +763,18 @@ $(function () {
 
         this.setState({cJ: newCj})
         this.saveStateinLocalStorage() // 改完了 存個檔
+        this.cancelPanel() // 關一下
       } else {
         console.log('DOM型態不符合喔...')
       }
+    }
+
+    cancelPanel () {
+      this.setState({
+        editBranch: {},
+        nowEditType: ''
+      })
+      $('.panelBox').hide()
     }
   }
 
