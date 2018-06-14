@@ -11,8 +11,8 @@ class deleteSetBox extends React.Component {
   render () {
     return (
       <div className='deleteSetBox'>
-        <a onClick={this.props.deleteJsonTrees} href='javascripts:void(0)'>Delete</a>
-        <a>set this Box</a>
+        <button onClick={this.props.deleteJsonTrees} >Delete this Box</button>
+        <button onClick={this.props.showPanel.bind(null, [])}>set this Box</button>
       </div>
     )
   }

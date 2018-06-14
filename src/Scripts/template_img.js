@@ -15,7 +15,7 @@ class TemplateImg extends React.Component {
         alt={this.props.alt}
         src={this.props.src}
         onDragStart={this.props.onDragStartFunction}
-        onClick={this.props.onClickFunction.bind(null, 'Img')} />
+        onClick={this.props.showPanel.bind(null, 'Img')} />
     )
   }
 }

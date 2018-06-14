@@ -4,46 +4,33 @@
 */
 // 因為 browserify打包模塊太慢了 開發不使用
 
-class panelSetText extends React.Component {
+class panelSetDiv extends React.Component {
   constructor (props) {
     super(props)
-    this.state = {
+    /* this.state = {
       text: ''
-    }
-
-    this.handleChangeTextContend = this.handleChangeTextContend.bind(this)
+    } */
   }
   componentWillMount () {
-    if (this.props.nowBranchData.cJ !== 'Text') return
-
-    this.setState({
-      text: this.props.nowBranchData.text
-    })
-  }
-
-  handleChangeTextContend (e) {
-    this.setState({
-      text: e.target.value
-    })
+    if (this.props.nowBranchData.cJ !== []) return
   }
 
   render () {
     return (
       <div id='SetBox'>
-        <h3>Edit Text</h3>
+        <h3>Edit Div</h3>
         <div>
           <label>
             <span>文字內容</span>
             <textarea
               rows='4' cols='50'
               type='textarea'
-              value={this.state.text}
-              onChange={this.handleChangeTextContend}
               />
           </label>
         </div>
         <ul>
-          <li><button onClick={this.props.save.bind(null, 'Text', this.state)}>Save</button></li>
+          <li><button onClick={this.props.cleanUpCjArray}>刪光這個Box內的東西</button></li>
+          <li><button onClick={this.props.save.bind(null, [], this.state)}>Save</button></li>
           <li><button onClick={this.props.cancel}>Cancel</button></li>
         </ul>
       </div>
@@ -51,4 +38,4 @@ class panelSetText extends React.Component {
   }
 }
 
-module.exports = panelSetText
+module.exports = panelSetDiv

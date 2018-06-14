@@ -9,6 +9,7 @@ import PanelSetImg from './panel_setImg'
 import PanelSetText from './panel_setText'
 import TemplateImg from './template_img'
 import TemplateText from './template_text'
+import PanelSetDiv from './panel_setDiv'
 
 $(function () {
   class MenuAndOperatingArea extends React.Component {
@@ -38,6 +39,7 @@ $(function () {
       this.changeAndSaveDomAttribute = this.changeAndSaveDomAttribute.bind(this)
       this.showPanel = this.showPanel.bind(this)
       this.cancelPanel = this.cancelPanel.bind(this)
+      this.cleanUpCjArray = this.cleanUpCjArray.bind(this)
     }
 
     jsonIsWhichObj (obj) { // 用來判斷JSON最外層是什麼樣的Obj 如果是{} 回應True []回應False
@@ -574,7 +576,10 @@ $(function () {
                   onDragStart={this.ondragstart}
                 >
                   {this.mapToCreatDiv(node.cJ, myKey)}
-                  <DeleteSetBox deleteJsonTrees={this.deleteJsonTrees} />
+                  <DeleteSetBox
+                    deleteJsonTrees={this.deleteJsonTrees}
+                    showPanel={this.showPanel}
+                   />
                 </div>
               )
             } else {
@@ -590,7 +595,10 @@ $(function () {
                   draggable='true'
                   onDragStart={this.ondragstart}
                 >
-                  <DeleteSetBox deleteJsonTrees={this.deleteJsonTrees} />
+                  <DeleteSetBox
+                    deleteJsonTrees={this.deleteJsonTrees}
+                    showPanel={this.showPanel}
+                  />
                 </div>
               )
             }
@@ -604,7 +612,7 @@ $(function () {
                   alt={node.alt}
                   src={node.url}
                   onDragStartFunction={this.ondragstart}
-                  onClickFunction={this.showPanel}
+                  showPanel={this.showPanel}
                 />)
             } else if (node.cJ === 'Text') {
               return (
@@ -613,7 +621,7 @@ $(function () {
                   key={index}
                   text={node.text}
                   onDragStartFunction={this.ondragstart}
-                  onClickFunction={this.showPanel}
+                  showPanel={this.showPanel}
                 />)
             }
           }
@@ -715,6 +723,14 @@ $(function () {
                 nowBranchData={this.state.editBranch}
               />
             }
+            {!this.jsonIsWhichObj(this.state.nowEditType) &&
+              <PanelSetDiv
+                cleanUpCjArray={this.cleanUpCjArray}
+                save={this.changeAndSaveDomAttribute}
+                cancel={this.cancelPanel}
+                nowBranchData={this.state.editBranch}
+              />
+            }
           </div>
           <div>
             <div id='operatingArea'
@@ -757,6 +773,18 @@ $(function () {
         nowEditType: type,
         editLevel: e.target.id.split('-') // 取得level
       })
+    }
+
+    cleanUpCjArray (e) {
+      console.log($(e.currentTarget))
+
+      var newCj = this.state.cJ
+      /*var branch = this.climbingJsonTrees(newCj, level)
+      branch.cJ = [] */
+
+      this.setState({cJ: newCj})
+      this.saveStateinLocalStorage() // 改完了 存個檔
+      this.cancelPanel() // 關一下
     }
 
     changeAndSaveDomAttribute (type, newData) { // 專門處裏由 panel 浮動面板傳來異動this.state.cJ的處理

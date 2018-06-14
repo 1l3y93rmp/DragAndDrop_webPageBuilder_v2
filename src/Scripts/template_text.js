@@ -13,7 +13,7 @@ class TemplateImg extends React.Component {
         id={this.props.id}
         draggable='true'
         onDragStart={this.props.onDragStartFunction}
-        onClick={this.props.onClickFunction.bind(null, 'Text')}
+        onClick={this.props.showPanel.bind(null, 'Text')}
         >
         {this.props.text}</p>
     )
