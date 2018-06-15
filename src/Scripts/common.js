@@ -485,19 +485,19 @@ $(function () {
       }
 
       if (beingDraggedID === 'emptyBox') { // 被拖的東西ID 如果是空Box
-        console.log('添加模式(空盒)')
+        // console.log('添加模式(空盒)')
         this.addJsonTrees({cJ: []}, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
         // 傳入被爬的對像與指定層級與操作方法給改變JsonTrees的方法
         // 其中得到枝子的方法是通由爬樹方法( climbingJsonTrees )找到的
       }
 
       if (beingDraggedID === 'imgTag') { // 被拖動的東西ID是 圖片
-        console.log('添加模式(圖片)')
+        // console.log('添加模式(圖片)')
         this.addJsonTrees({cJ: 'Img', url: 'img/k.jpg', alt: '圖片說明'}, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
       }
 
       if (beingDraggedID === 'TextTag') { // 被拖動的東西ID是 圖片
-        console.log('添加模式(文字)')
+        // console.log('添加模式(文字)')
         this.addJsonTrees({cJ: 'Text', text: '請輸入文字'}, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
       }
 
@@ -506,11 +506,11 @@ $(function () {
           // 深層複製 打斷魂結 使不連動
 
         if (this.altCopymode) { // 複製模式
-          console.log('複製模式')
+          // console.log('複製模式')
           this.addJsonTrees(copyJsonBranch, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
           // 這邊出了一個問題 再複製的時候只能拉動可視的 data-row 但是其實這會讓它多複製一層
         } else { // 如果不是複製模式，需要刪除舊的DOM
-          console.log('移動模式')
+          // console.log('移動模式')
           delete copyJsonBranch.delete // 複製出來新的不需要有delete屬性
           this.addJsonTrees(copyJsonBranch, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
 
@@ -641,7 +641,10 @@ $(function () {
                 onDragStart={this.ondragstart}
               >
                 {this.mapToCreatDiv(node[0].cJ, myKey + '-0')}
-                <DeleteSetBox deleteJsonTrees={this.deleteJsonTrees} />
+                <DeleteSetBox
+                  deleteJsonTrees={this.deleteJsonTrees}
+                  showPanel={this.showPanel}
+                />
               </div>
             )
           } else {
@@ -662,7 +665,9 @@ $(function () {
                   onDragStart={this.ondragstart}
                   >
                   {this.mapToCreatDiv(node_.cJ, sideBySideKey)}
-                  <DeleteSetBox deleteJsonTrees={this.deleteJsonTrees} />
+                  <DeleteSetBox
+                    deleteJsonTrees={this.deleteJsonTrees}
+                    showPanel={this.showPanel} />
                 </div>
               )
             })
@@ -768,19 +773,22 @@ $(function () {
 
     showPanel (type, e) { // 將浮動面板打開，並且傳入相關 level 資訊
       $('.panelBox').show()
+
+      var typeIsDiv = !this.jsonIsWhichObj(type)
       this.setState({
-        editBranch: this.climbingJsonTrees(this.state.cJ, e.target.id.split('-')),
+        editBranch: typeIsDiv ? this.climbingJsonTrees(this.state.cJ, $(e.target).parent().parent().attr('id').split('-')) : this.climbingJsonTrees(this.state.cJ, e.target.id.split('-')),
         nowEditType: type,
-        editLevel: e.target.id.split('-') // 取得level
+        editLevel: typeIsDiv ? $(e.target).parent().parent().attr('id').split('-') : e.target.id.split('-') // 取得level
       })
     }
 
     cleanUpCjArray (e) {
-      console.log($(e.currentTarget))
+      console.log($(e.currentTarget)) // 這樣會叫到浮動窗裏面的按鈕
+      console.log(this.state.editLevel)
 
       var newCj = this.state.cJ
-      /*var branch = this.climbingJsonTrees(newCj, level)
-      branch.cJ = [] */
+      var branch = this.climbingJsonTrees(newCj, this.state.editLevel)
+      branch.cJ = []
 
       this.setState({cJ: newCj})
       this.saveStateinLocalStorage() // 改完了 存個檔
