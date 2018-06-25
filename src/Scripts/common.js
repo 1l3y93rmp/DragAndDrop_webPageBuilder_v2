@@ -17,7 +17,7 @@ $(function () {
       super()
       // contentJson 縮寫成 cJ
       this.state = {
-        cJ: [[{cJ: []}], [{cJ: []}]], // 被渲染與被編輯的內容
+        cJ: [], // 被渲染與被編輯的內容
         editBranch: {}, // 圖片或文字真正內容 state 在浮動模版中傳遞
         nowEditType: '', // 是編輯圖片還是文字或是DIV 在浮動模版中傳遞
         editLevel: [] // 圖片或是文字被編輯 Level 使用 state 在浮動模版中傳遞
@@ -128,6 +128,7 @@ $(function () {
         // 如果是{}
         // console.log('編輯對象是{}，操作{}裡面的cJ特性~')
         InSiteIsWhichObj = newJsonBranch.cJ.length ? this.jsonIsWhichObj(newJsonBranch.cJ[0]) : false
+        let isMoreDiv  // 判斷是否左右存在多個DIV 包裹方式會有所不同
 
         if (way === 'C') { // 內側中間
           newJsonBranch.cJ.push(plusObj)
@@ -157,8 +158,13 @@ $(function () {
         if (way === 'T') { // 內側上方
           if (InSiteIsWhichObj) {
             // newJsonBranch.cJ 內容物是{}
+            isMoreDiv = newJsonBranch.cJ.length // 判斷是否左右存在多個DIV 包裹方式會有所不同
             newJsonBranch.cJ.splice(0, newJsonBranch.cJ.length)
-            newJsonBranch.cJ.push(arrayPackagePlusObj, copyJsonBranch.cJ) // OK
+            if (isMoreDiv >= 2) {
+              newJsonBranch.cJ.push(arrayPackagePlusObj, [{cJ: copyJsonBranch.cJ}]) // OK
+            } else {
+              newJsonBranch.cJ.push(arrayPackagePlusObj, copyJsonBranch.cJ) // OK
+            }
           } else {
             // newJsonBranch.cJ 內容物是[]
             newJsonBranch.cJ.unshift(arrayPackagePlusObj) // OK
@@ -168,8 +174,13 @@ $(function () {
         if (way === 'B') { // 內側下方
           if (InSiteIsWhichObj) {
             // newJsonBranch.cJ 內容物是{}
+            isMoreDiv = newJsonBranch.cJ.length // 判斷是否左右存在多個DIV 包裹方式會有所不同
             newJsonBranch.cJ.splice(0, newJsonBranch.cJ.length)
-            newJsonBranch.cJ.push(copyJsonBranch.cJ, arrayPackagePlusObj) // OK
+            if (isMoreDiv >= 2) {
+              newJsonBranch.cJ.push([{cJ: copyJsonBranch.cJ}], arrayPackagePlusObj) // OK
+            } else {
+              newJsonBranch.cJ.push(copyJsonBranch.cJ, arrayPackagePlusObj) // OK
+            }
           } else {
             // newJsonBranch.cJ 內容物是[]
             newJsonBranch.cJ.push(arrayPackagePlusObj) // OK
