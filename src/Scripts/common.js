@@ -17,10 +17,10 @@ $(function () {
       super()
       // contentJson 縮寫成 cJ
       this.state = {
-        cJ: [],
-        editBranch: {},
-        nowEditType: '',
-        editLevel: []
+        cJ: [[{cJ: []}], [{cJ: []}]], // 被渲染與被編輯的內容
+        editBranch: {}, // 圖片或文字真正內容 state 在浮動模版中傳遞
+        nowEditType: '', // 是編輯圖片還是文字或是DIV 在浮動模版中傳遞
+        editLevel: [] // 圖片或是文字被編輯 Level 使用 state 在浮動模版中傳遞
       }
 
       this.altCopymode = false // 當前到底有沒有在按alt
@@ -366,13 +366,21 @@ $(function () {
       if ($top + 40 > mouseTop && $top < mouseTop && isWrap && !isRow) { return ('T') }
       if (mouseTop > $bottom - 40 && mouseTop < $bottom && isWrap && !isRow) { return ('B') }
 
-      if (!isWrap) { return ('C') }
+      // return ('C') // 即便是不是 isWrap 都可以放置在中間
+
+      if (!isWrap) {
+        return ('C')
+      } else {
+        if ($target.find('div').not('.deleteSetBox').length === 0) {
+          return ('C')
+        }
+      }
+
       return 'X' // 沒Class的意思
     }
 
     dragoverGoSlect (isWrap, ctrlOutSiteTB, ctrlOutSiteLR, e) { // 被拖著旋停時 下面的物件 需要添加Class
       // 這個涵式只要旋停時就會不斷的觸發
-
       let $target = $(e.currentTarget) // 這是被拖到者的target
 
       // e.dataTransfer.getData('canIAbreast') 空字串
@@ -627,6 +635,8 @@ $(function () {
           }
         } else if (!ObjIsObject) {
           // 代表 node 是 []
+          console.log('代表 node 是 []')
+          console.log(node)
           if (node.length === 1) {
             return (
               <div
@@ -635,7 +645,7 @@ $(function () {
                 data-row='true'
                 onDrop={this.dropped}
                 onDragEnter={this.cancelDefault}
-                onDragOver={this.dragoverGoSlect.bind(null, node[0].cJ.length, true, false)}
+                onDragOver={this.dragoverGoSlect.bind(null, node[0].cJ, true, false)}
                 onDragLeave={this.dragleaveGoBack}
                 draggable='true'
                 onDragStart={this.ondragstart}
@@ -684,7 +694,9 @@ $(function () {
                 onDragStart={this.ondragstart}
                 >
                 {sideBySideDom}
-                <DeleteSetBox deleteJsonTrees={this.deleteJsonTrees} />
+                <DeleteSetBox
+                  deleteJsonTrees={this.deleteJsonTrees}
+                  showPanel={this.showPanel} />
               </div>
             )
           }
