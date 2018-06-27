@@ -17,7 +17,7 @@ $(function () {
       super()
       // contentJson 縮寫成 cJ
       this.state = {
-        cJ: [], // 被渲染與被編輯的內容
+        cJ: [[{cJ: []}], [{cJ: []}]], // 被渲染與被編輯的內容
         editBranch: {}, // 圖片或文字真正內容 state 在浮動模版中傳遞
         nowEditType: '', // 是編輯圖片還是文字或是DIV 在浮動模版中傳遞
         editLevel: [] // 圖片或是文字被編輯 Level 使用 state 在浮動模版中傳遞
@@ -549,34 +549,6 @@ $(function () {
       this.cancelDefault(e)
     }
 
-    componentDidMount () {
-      window.localStorage.setItem('Undo', JSON.stringify([[]]))
-      document.addEventListener('keydown', (e) => {
-        if (e.keyCode === 18) {
-          this.altCopymode = true
-          e.preventDefault()
-          // 為什麼要寫這個 我也不懂 沒寫的話keyup後要再點擊一次畫面這個事件才能再次有效
-        }
-
-        if (e.keyCode === 90 && e.ctrlKey) { // Ctrl+Z
-          this.recoveryState(false)
-          e.preventDefault()
-        }
-
-        if (e.keyCode === 89 && e.ctrlKey) { // Ctrl+y
-          this.recoveryState(true)
-          e.preventDefault()
-        }
-      })
-
-      document.addEventListener('keyup', (e) => {
-        if (e.keyCode === 18) {
-          this.altCopymode = false
-          // console.log('放開' + this.altCopymode)
-        }
-      })
-    }
-
     mapToCreatDiv (cJdata, previousKey) {
       return cJdata.map((node, index) => {
         var myKey = previousKey === undefined ? index : previousKey + '-' + index
@@ -718,6 +690,7 @@ $(function () {
         }
       })
     }
+
     render () {
       // render operatingArea 時 會參照 State 內的資料
       return (
@@ -779,8 +752,7 @@ $(function () {
       )
     }
 
-    componentDidUpdate () {
-      // 每當化面更新 重綁所有的 hover
+    reloadMouseEven () {
       $('#operatingArea div').off('mouseenter mouseleave')
 
       $('#operatingArea div').not('.deleteSetBox').hover(function (e) {
@@ -796,6 +768,40 @@ $(function () {
         e.stopPropagation()
       })
       // 注意冒泡以及重疊問題
+    }
+
+    componentDidMount () {
+      window.localStorage.setItem('Undo', JSON.stringify([[]]))
+      document.addEventListener('keydown', (e) => {
+        if (e.keyCode === 18) {
+          this.altCopymode = true
+          e.preventDefault()
+          // 為什麼要寫這個 我也不懂 沒寫的話keyup後要再點擊一次畫面這個事件才能再次有效
+        }
+
+        if (e.keyCode === 90 && e.ctrlKey) { // Ctrl+Z
+          this.recoveryState(false)
+          e.preventDefault()
+        }
+
+        if (e.keyCode === 89 && e.ctrlKey) { // Ctrl+y
+          this.recoveryState(true)
+          e.preventDefault()
+        }
+      })
+
+      document.addEventListener('keyup', (e) => {
+        if (e.keyCode === 18) {
+          this.altCopymode = false
+          // console.log('放開' + this.altCopymode)
+        }
+      })
+      this.reloadMouseEven()
+    }
+
+    componentDidUpdate () {
+      // 每當化面更新 重綁所有的 hover
+      this.reloadMouseEven()
     }
 
     showPanel (type, e) { // 將浮動面板打開，並且傳入相關 level 資訊
