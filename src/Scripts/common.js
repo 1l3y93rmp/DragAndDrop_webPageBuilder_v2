@@ -211,19 +211,25 @@ $(function () {
     }
 
     deleteJsonTrees (e) { // 刪除樹枝
-      var $target = $(e.currentTarget).parent().parent() // 醜
-      console.log('刪除模式' + $target.attr('id'))
-      var level = $target.attr('id').split('-')
-      var isRow = $target.attr('data-row') // 得知這個要被刪的東西是否為 data-row
-      var index = level[level.length - 1]
+      const $target = $(e.currentTarget).parent().parent() // 醜
+      const $targetID = $target.attr('id')
+      const isRow = $target.attr('data-row') // 得知這個要被刪的東西是否為 data-row
+      let level = $targetID.split('-')
+      let index
       level.pop()
-      var newCj = this.state.cJ
+
+      index = level.length > 0 ? level[level.length - 1] : parseInt($targetID.split(0, 1))
+      // 防止 index ㄤ低find 問題，如果level被砍到撈不到index的時候 還是回到ID去取得
 
       if (isRow) {
-        level.pop()
+        level.pop() // isRow的操作法較為特殊 index 與 level指的是不同層 (level要往上爬一層)
       }
 
-      var deleteBranchUpper = this.climbingJsonTrees(newCj, level)
+      console.log('刪除模式' + $targetID)
+
+      let newCj = this.state.cJ
+      let deleteBranchUpper = this.climbingJsonTrees(newCj, level)
+
       // 得到要被砍的枝子的上層
       if (this.jsonIsWhichObj(deleteBranchUpper)) {
         // 如果是Object
@@ -408,7 +414,7 @@ $(function () {
       let branch = this.climbingJsonTrees(copyJson, e.currentTarget.id.split('-'))
 
       if (!caniabreast && branch.cJ.length) {
-        console.log('你拖動的是一個必須獨立存在DIV的物件，這裡已經被霸占')
+        // console.log('你拖動的是一個必須獨立存在DIV的物件，這裡已經被霸占')
         this.cancelDefault(e)
         return
       }
@@ -422,7 +428,7 @@ $(function () {
       }
 
       if (!sideBySide) { // 若有找到 請勿並排
-        console.log('含有不能並排的內容物')
+        // console.log('含有不能並排的內容物')
         this.cancelDefault(e)
         return
       }
@@ -646,8 +652,6 @@ $(function () {
           }
         } else if (!ObjIsObject) {
           // 代表 node 是 []
-          console.log('代表 node 是 []')
-          console.log(node)
           if (node.length === 1) {
             return (
               <div
