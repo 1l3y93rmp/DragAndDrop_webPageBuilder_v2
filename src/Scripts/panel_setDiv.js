@@ -21,11 +21,28 @@ class panelSetDiv extends React.Component {
         <h3>Edit Div</h3>
         <div>
           <label>
-            <span>文字內容</span>
-            <textarea
-              rows='4' cols='50'
-              type='textarea'
-              />
+            <span>背景圖片</span>
+            <input
+              name='DivBGimg'
+              type='text'
+            />
+          </label>
+          <label>
+            <span>背景顏色</span>
+            <input
+              name='DivBGColor'
+              type='text'
+            />
+          </label>
+          <label>
+            <span>內容排列方式</span>
+            <select
+              name='DivtextAlign'
+            >
+              <option>齊左</option>
+              <option>齊中</option>
+              <option>齊右</option>
+            </select>
           </label>
         </div>
         <ul>

@@ -17,7 +17,7 @@ $(function () {
       super()
       // contentJson 縮寫成 cJ
       this.state = {
-        cJ: [[{cJ: []}], [{cJ: []}]], // 被渲染與被編輯的內容
+        cJ: [], // 被渲染與被編輯的內容
         editBranch: {}, // 圖片或文字真正內容 state 在浮動模版中傳遞
         nowEditType: '', // 是編輯圖片還是文字或是DIV 在浮動模版中傳遞
         editLevel: [] // 圖片或是文字被編輯 Level 使用 state 在浮動模版中傳遞
@@ -421,7 +421,7 @@ $(function () {
 
       let sideBySide = true
       for (let i = 0; i < branch.cJ.length; i++) {
-        if (typeof (branch.cJ[i].cJ) === 'string') {
+        if (typeof (branch.cJ[i].cJ) === 'string') { // 如果cJ是字串表示不是div
           sideBySide = false
           break
         }
@@ -523,7 +523,7 @@ $(function () {
 
       if (beingDraggedID === 'TextTag') { // 被拖動的東西ID是 圖片
         // console.log('添加模式(文字)')
-        this.addJsonTrees({cJ: 'Text', text: '請輸入文字'}, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
+        this.addJsonTrees({cJ: 'Text', text: '請輸入文字', style:{}}, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
       }
 
       if (/[-]/g.test(beingDraggedID) || /\d{1}/g.test(beingDraggedID)) { // 被拖的東西ID 是一個複雜的DIV 且用爬樹把她找出來
@@ -617,6 +617,7 @@ $(function () {
                   id={myKey}
                   key={index}
                   text={node.text}
+                  style={node.style}
                   onDragStartFunction={this.ondragstart}
                   showPanel={this.showPanel}
                 />)
@@ -838,6 +839,7 @@ $(function () {
         }
 
         this.setState({cJ: newCj})
+
         this.saveStateinLocalStorage() // 改完了 存個檔
         this.cancelPanel() // 關一下
       } else {
