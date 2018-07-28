@@ -14,7 +14,10 @@ class panelSetDiv extends React.Component {
     }
   }
   componentWillMount () {
-    if (this.props.nowBranchData.cJ !== []) return
+    // if (this.props.nowBranchData.cJ !== []) return
+    this.setState({
+      style: this.props.nowBranchData.style
+    })
   }
   handleChangeStyle (cssKey, unit, e) {
     // unit指的是單位 看Style是否要加單位
@@ -29,14 +32,14 @@ class panelSetDiv extends React.Component {
           <label>
             <span>背景圖片</span>
             <input
-              name='DivBGimg'
               type='text'
+              onChange={this.handleChangeStyle.bind(null, 'backgroundImage', '')}
+              value={this.state.style.backgroundImage === undefined ? '123' : this.state.style.backgroundImage }
             />
           </label>
           <label>
             <span>背景顏色</span>
             <input
-              name='DivBGColor'
               type='color'
               onChange={this.handleChangeStyle.bind(null, 'backgroundColor', '')}
               value={this.state.style.backgroundColor === undefined ? '' : this.state.style.backgroundColor}
