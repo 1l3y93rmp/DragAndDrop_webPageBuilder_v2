@@ -512,6 +512,7 @@ $(function () {
       if (beingDraggedID === 'emptyBox') { // 被拖的東西ID 如果是空Box
         // console.log('添加模式(空盒)')
         this.addJsonTrees({cJ: [], style:{}}, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
+        // 其中得到枝子的方法是通由爬樹方法( climbingJsonTrees )找到的
         // 傳入被爬的對像與指定層級與操作方法給改變JsonTrees的方法
         // 其中得到枝子的方法是通由爬樹方法( climbingJsonTrees )找到的
       }
@@ -564,7 +565,7 @@ $(function () {
                 <div
                   id={myKey}
                   key={index}
-                  style={[divStyle, node.style]}
+                  style={$.extend(divStyle, node.style)}
                   onDrop={this.dropped}
                   onDragEnter={this.cancelDefault}
                   onDragOver={this.dragoverGoSlect.bind(null, true, false, false)}
@@ -584,7 +585,7 @@ $(function () {
                 <div
                   id={myKey}
                   key={index}
-                  style={[divStyle, node.style]}
+                  style={$.extend(divStyle, node.style)}
                   onDrop={this.dropped}
                   onDragEnter={this.cancelDefault}
                   onDragOver={this.dragoverGoSlect.bind(null, false, false, false)}
@@ -654,7 +655,7 @@ $(function () {
                 <div
                   id={sideBySideKey}
                   key={index_}
-                  style={[divStyle, node.style]}
+                  style={$.extend(divStyle, node.style)}
                   onDrop={this.dropped}
                   onDragEnter={this.cancelDefault}
                   onDragOver={this.dragoverGoSlect.bind(null, node_.cJ.length, false, true)}
