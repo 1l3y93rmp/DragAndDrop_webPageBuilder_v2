@@ -3,16 +3,22 @@
  * import $ from 'jquery'
 */
 // 因為 browserify打包模塊太慢了 開發不使用
+import changeStyle from './handle_changeStyle'
 
 class panelSetDiv extends React.Component {
   constructor (props) {
     super(props)
-    /* this.state = {
-      text: ''
-    } */
+    this.handleChangeStyle = this.handleChangeStyle.bind(this)
+    this.state = {
+      style: {}
+    }
   }
   componentWillMount () {
     if (this.props.nowBranchData.cJ !== []) return
+  }
+  handleChangeStyle (cssKey, unit, e) {
+    // unit指的是單位 看Style是否要加單位
+    this.setState(changeStyle(this.state.style, cssKey, unit, e))
   }
 
   render () {
@@ -37,11 +43,12 @@ class panelSetDiv extends React.Component {
           <label>
             <span>內容排列方式</span>
             <select
-              name='DivtextAlign'
+              value={this.state.style.textAlign === undefined ? 'left' : this.state.style.textAlign}
+              onChange={this.handleChangeStyle.bind(null, 'textAlign', '')}
             >
-              <option>齊左</option>
-              <option>齊中</option>
-              <option>齊右</option>
+              <option value='left'>齊左</option>
+              <option value='center'>齊中</option>
+              <option value='right'>齊右</option>
             </select>
           </label>
         </div>

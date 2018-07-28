@@ -6,13 +6,13 @@
 class TemplateImg extends React.Component {
   constructor (props) {
     super(props)
+    this.state = {
+      text: '',
+      style: {}
+    }
   }
   
   render () {
-    
-    // 要處裡CLASS的KEY的-問題
-    var style = {color: '#96e7bc'}
-    console.log(this.props.style)
     return (
       <p
         id={this.props.id}
