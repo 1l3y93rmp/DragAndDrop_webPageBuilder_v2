@@ -831,14 +831,24 @@ $(function () {
     }
 
     changeAndSaveDomAttribute (type, newData) { // 專門處裏由 panel 浮動面板傳來異動this.state.cJ的處理
+      console.log(type)
+      console.log(newData)
+
       var newCj = this.state.cJ
       var branch = this.climbingJsonTrees(newCj, this.state.editLevel)
-
+      console.log(branch.cJ)
       if (branch.cJ === type) {
         for (let v in newData) {
           branch[v] = newData[v] // 取代掉裏面的特性
         }
 
+        this.setState({cJ: newCj})
+
+        this.saveStateinLocalStorage() // 改完了 存個檔
+        this.cancelPanel() // 關一下
+      } else if(type === 'Box' && typeof(branch.cJ) === 'object') {
+
+        branch.style = newData.style
         this.setState({cJ: newCj})
 
         this.saveStateinLocalStorage() // 改完了 存個檔

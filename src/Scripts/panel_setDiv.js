@@ -37,8 +37,11 @@ class panelSetDiv extends React.Component {
             <span>背景顏色</span>
             <input
               name='DivBGColor'
-              type='text'
+              type='color'
+              onChange={this.handleChangeStyle.bind(null, 'backgroundColor', '')}
+              value={this.state.style.backgroundColor === undefined ? '' : this.state.style.backgroundColor}
             />
+            
           </label>
           <label>
             <span>內容排列方式</span>
@@ -54,7 +57,7 @@ class panelSetDiv extends React.Component {
         </div>
         <ul>
           <li><button onClick={this.props.cleanUpCjArray}>刪光這個Box內的東西</button></li>
-          <li><button onClick={this.props.save.bind(null, [], this.state)}>Save</button></li>
+          <li><button onClick={this.props.save.bind(null, 'Box', this.state)}>Save</button></li>
           <li><button onClick={this.props.cancel}>Cancel</button></li>
         </ul>
       </div>
