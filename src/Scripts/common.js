@@ -20,7 +20,8 @@ $(function () {
         cJ: [], // 被渲染與被編輯的內容
         editBranch: {}, // 圖片或文字真正內容 state 在浮動模版中傳遞
         nowEditType: '', // 是編輯圖片還是文字或是DIV 在浮動模版中傳遞
-        editLevel: [] // 圖片或是文字被編輯 Level 使用 state 在浮動模版中傳遞
+        editLevel: [], // 圖片或是文字被編輯 Level 使用 state 在浮動模版中傳遞
+        menuOpen: false
       }
 
       this.altCopymode = false // 當前到底有沒有在按alt
@@ -40,6 +41,7 @@ $(function () {
       this.showPanel = this.showPanel.bind(this)
       this.cancelPanel = this.cancelPanel.bind(this)
       this.cleanUpCjArray = this.cleanUpCjArray.bind(this)
+      this.openAndCloseMenu = this.openAndCloseMenu.bind(this)
     }
 
     jsonIsWhichObj (obj) { // 用來判斷JSON最外層是什麼樣的Obj 如果是{} 回應True []回應False
@@ -511,7 +513,7 @@ $(function () {
 
       if (beingDraggedID === 'emptyBox') { // 被拖的東西ID 如果是空Box
         // console.log('添加模式(空盒)')
-        this.addJsonTrees({cJ: [], style:{}}, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
+        this.addJsonTrees({cJ: [], style: {}}, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
         // 其中得到枝子的方法是通由爬樹方法( climbingJsonTrees )找到的
         // 傳入被爬的對像與指定層級與操作方法給改變JsonTrees的方法
         // 其中得到枝子的方法是通由爬樹方法( climbingJsonTrees )找到的
@@ -519,12 +521,12 @@ $(function () {
 
       if (beingDraggedID === 'imgTag') { // 被拖動的東西ID是 圖片
         // console.log('添加模式(圖片)')
-        this.addJsonTrees({cJ: 'Img', url: 'img/k.jpg', alt: '圖片說明', style:{}}, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
+        this.addJsonTrees({cJ: 'Img', url: 'img/k.jpg', alt: '圖片說明', style: {}}, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
       }
 
       if (beingDraggedID === 'TextTag') { // 被拖動的東西ID是 圖片
         // console.log('添加模式(文字)')
-        this.addJsonTrees({cJ: 'Text', text: '請輸入文字', style:{}}, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
+        this.addJsonTrees({cJ: 'Text', text: '請輸入文字', style: {}}, level, this.climbingJsonTrees(newCj, copylevel), operatingWay)
       }
 
       if (/[-]/g.test(beingDraggedID) || /\d{1}/g.test(beingDraggedID)) { // 被拖的東西ID 是一個複雜的DIV 且用爬樹把她找出來
@@ -692,17 +694,22 @@ $(function () {
         }
       })
     }
+    openAndCloseMenu () {
+      this.setState({menuOpen: !this.state.menuOpen})
+    }
 
     render () {
       // render operatingArea 時 會參照 State 內的資料
+
+      var menuStyle = {'margin-top': this.state.menuOpen ? '0px' : '-102px'}
       return (
         <div>
-          <div id='menu'>
+          <div id='menu' style={menuStyle}>
             <div
               id='emptyBox'
               draggable='true'
               onDragStart={this.ondragstart}
-            > 添加一個框框 </div>
+            > 添加一個<br />框框 </div>
             <img
               id='imgTag'
               draggable='true'
@@ -713,7 +720,8 @@ $(function () {
               id='TextTag'
               draggable='true'
               onDragStart={this.ondragstart}
-            >添加一段文字</p>
+            >添加一段<br />文字</p>
+            <button onClick={this.openAndCloseMenu}>添加框/圖片/文字</button>
           </div>
           <div className='panelBox'> {/* 浮動操作面板放置區 */}
             {this.state.nowEditType === 'Img' &&
@@ -739,7 +747,7 @@ $(function () {
               />
             }
           </div>
-          <div>
+          <div className='operating'>
             <div id='operatingArea'
               data-role='drag-drop-container'
               onDrop={this.dropped}
@@ -846,8 +854,7 @@ $(function () {
 
         this.saveStateinLocalStorage() // 改完了 存個檔
         this.cancelPanel() // 關一下
-      } else if(type === 'Box' && typeof(branch.cJ) === 'object') {
-
+      } else if (type === 'Box' && typeof (branch.cJ) === 'object') {
         branch.style = newData.style
         this.setState({cJ: newCj})
 
