@@ -701,7 +701,7 @@ $(function () {
     render () {
       // render operatingArea 時 會參照 State 內的資料
 
-      var menuStyle = {'margin-top': this.state.menuOpen ? '0px' : '-102px'}
+      var menuStyle = {'margin-top': this.state.menuOpen ? '0px' : '-122px'}
       return (
         <div>
           <div id='menu' style={menuStyle}>
@@ -709,7 +709,7 @@ $(function () {
               id='emptyBox'
               draggable='true'
               onDragStart={this.ondragstart}
-            > 添加一個<br />框框 </div>
+            > Add box </div>
             <img
               id='imgTag'
               draggable='true'
@@ -720,8 +720,8 @@ $(function () {
               id='TextTag'
               draggable='true'
               onDragStart={this.ondragstart}
-            >添加一段<br />文字</p>
-            <button onClick={this.openAndCloseMenu}>添加框/圖片/文字</button>
+            >Add text</p>
+            <button onClick={this.openAndCloseMenu}>Add box / image / text</button>
           </div>
           <div className='panelBox'> {/* 浮動操作面板放置區 */}
             {this.state.nowEditType === 'Img' &&
